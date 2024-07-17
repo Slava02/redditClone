@@ -5,13 +5,14 @@ import (
 )
 
 var (
-	ErrURLNotFound = errors.New("url not found")
-	ErrURLExists   = errors.New("url exists")
+	ErrNotFound = errors.New("not found")
+	ErrExists   = errors.New("exists")
 )
 
 type ItemsRepo interface {
 	GetAll() ([]*Item, error)
 	GetByCategory(category string) ([]*Item, error)
+	GetPost(id string) (*Item, error)
 }
 
 type Comment struct {

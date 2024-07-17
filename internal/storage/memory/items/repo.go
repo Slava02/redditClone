@@ -1,6 +1,8 @@
 package memory
 
-import s "redditClone/internal/storage"
+import (
+	s "redditClone/internal/storage"
+)
 
 type ItemMemoryRepository struct {
 	lastID uint32
@@ -69,4 +71,21 @@ func (i *ItemMemoryRepository) GetByCategory(category string) ([]*s.Item, error)
 		}
 	}
 	return dataByCategory, nil
+}
+
+func (i *ItemMemoryRepository) GetPost(id string) (*s.Item, error) {
+	// TODO: Add sorting
+	var post *s.Item
+	var err error
+	for _, v := range i.data {
+		if v.ID == id {
+			post = v
+		}
+	}
+
+	if post == nil {
+		err = s.ErrNotFound
+	}
+
+	return post, err
 }

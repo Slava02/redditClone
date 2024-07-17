@@ -33,7 +33,7 @@ func main() {
 
 	router.Get("/api/posts/", items.List(itemHandlers))
 	router.Get("/api/posts/{category}", items.ListCategory(itemHandlers))
-	//GET /api/post/{POST_ID} - детали поста с комментами
+	router.Get("/api/post/{id}", items.ShowPost(itemHandlers))
 
 	log.Info("setting up file server")
 

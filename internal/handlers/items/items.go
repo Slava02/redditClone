@@ -72,3 +72,37 @@ func ListCategory(handler *ItemHandler) http.HandlerFunc {
 		render.JSON(w, r, posts)
 	}
 }
+
+func ShowPost(handler *ItemHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		op := "handlers.items.ShowPost"
+
+		handler.Logger.Info("show post handler")
+
+		handler.Logger.With(
+			slog.String("op", op),
+			slog.String("request_id", middleware.GetReqID(r.Context())),
+		)
+
+		id := chi.URLParam(r, "id")
+
+		post, err := handler.ItemsRepo.GetPost(id)
+		if err != nil {
+			if err == storage.ErrNotFound {
+				handler.Logger.Error("post not found", slog.Any("error", err))
+
+				render.Status(r, http.StatusNotFound)
+				render.JSON(w, r, resp.Error("post not found"))
+			} else {
+				handler.Logger.Error("failed to get posts", slog.Any("error", err))
+
+				render.Status(r, http.StatusInternalServerError)
+				render.JSON(w, r, resp.Error("failed to get posts"))
+			}
+
+			return
+		}
+
+		render.JSON(w, r, post)
+	}
+}
