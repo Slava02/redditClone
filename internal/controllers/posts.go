@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os/user"
 	"redditClone/internal/domain/entities"
+	"redditClone/pkg/logger"
 	"redditClone/pkg/resp"
 )
 
@@ -31,22 +32,57 @@ type Comment interface {
 func (h *Handler) initPostRoutes(api *gin.RouterGroup) {
 	posts := api.Group("/posts")
 	{
-		posts.GET("/", h.getAllPosts)
+		posts.GET("/", h.list)
+		posts.GET("/:category", h.listByCategory)
 	}
 
 	post := api.Group("/post")
 	{
-		//posts.GET("/", h.getAllPosts)
+		post.GET("/:id", h.postInfo)
 	}
-	_ = post
+
 }
 
-func (h *Handler) getAllPosts(c *gin.Context) {
+func (h *Handler) list(c *gin.Context) {
 	posts, err := h.Services.Posts.Posts(c)
+
 	if err != nil {
+		logger.Errorf("controllers.posts.list: ", err.Error())
+
 		resp.NewResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
+
 	c.JSON(http.StatusOK, posts)
+}
+
+func (h *Handler) listByCategory(c *gin.Context) {
+	category := c.Param("category")
+
+	posts, err := h.Services.Posts.PostsByCategory(c, category)
+	if err != nil {
+		logger.Errorf("controllers.posts.listByCategory", err.Error())
+
+		resp.NewResponse(c, http.StatusInternalServerError, err.Error())
+
+		return
+	}
+
+	c.JSON(http.StatusOK, posts)
+}
+
+func (h *Handler) postInfo(c *gin.Context) {
+	id := c.Param("id")
+
+	post, err := h.Services.Posts.PostById(c, id)
+	if err != nil {
+		logger.Errorf("controllers.posts.postInfo", err.Error())
+
+		resp.NewResponse(c, http.StatusInternalServerError, err.Error())
+
+		return
+	}
+
+	c.JSON(http.StatusOK, post)
 }

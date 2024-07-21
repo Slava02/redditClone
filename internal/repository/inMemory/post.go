@@ -64,9 +64,19 @@ func (p Posts) GetAllPosts(ctx context.Context) ([]*entities.Post, error) {
 	return p.data, nil
 }
 
-func (p Posts) PostsByCategory(ctx context.Context, category string) ([]*entities.Post, error) {
-	//TODO implement me
-	panic("implement me")
+func (p Posts) GetPostsByCategory(ctx context.Context, category string) ([]*entities.Post, error) {
+	//TODO add sorting
+	dataByCategory := make([]*entities.Post, 0)
+	for _, v := range p.data {
+		if v.Category == category {
+			dataByCategory = append(dataByCategory, v)
+		}
+	}
+	return dataByCategory, nil
+}
+
+func (p Posts) GetCategories(ctx context.Context) ([]string, error) {
+	return CategoriesList, nil
 }
 
 func (p Posts) PostsByUser(ctx context.Context, user user.User) ([]*entities.Post, error) {
@@ -75,8 +85,14 @@ func (p Posts) PostsByUser(ctx context.Context, user user.User) ([]*entities.Pos
 }
 
 func (p Posts) PostById(ctx context.Context, postID string) (*entities.Post, error) {
-	//TODO implement me
-	panic("implement me")
+	for _, v := range p.data {
+		if v.ID == postID {
+			return v, nil
+		}
+	}
+
+	// TODO: figure out how to import errorNotFound from repo
+	return nil, nil
 }
 
 func (p Posts) CreatePost(ctx context.Context, item entities.Post, author user.User) (*entities.Post, error) {
@@ -102,4 +118,13 @@ func (p Posts) DownVotePost(ctx context.Context, id string) (*entities.Post, err
 func (p Posts) UnVotePost(ctx context.Context, id string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+var CategoriesList = []string{
+	"music",
+	"funny",
+	"videos",
+	"programming",
+	"news",
+	"fashion",
 }

@@ -2,13 +2,16 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"os/user"
 	"redditClone/internal/domain/entities"
+	"redditClone/pkg/logger"
 )
 
 type PostRepository interface {
 	GetAllPosts(ctx context.Context) ([]*entities.Post, error)
-	PostsByCategory(ctx context.Context, category string) ([]*entities.Post, error)
+	GetPostsByCategory(ctx context.Context, category string) ([]*entities.Post, error)
+	GetCategories(ctx context.Context) ([]string, error)
 	PostsByUser(ctx context.Context, user user.User) ([]*entities.Post, error)
 	PostById(ctx context.Context, postID string) (*entities.Post, error)
 	CreatePost(ctx context.Context, item entities.Post, author user.User) (*entities.Post, error) // Здесь используется только category, text, title, type, нужно DTO
@@ -33,8 +36,28 @@ func (p PostService) Posts(ctx context.Context) ([]*entities.Post, error) {
 }
 
 func (p PostService) PostsByCategory(ctx context.Context, category string) ([]*entities.Post, error) {
-	//TODO implement me
-	panic("implement me")
+	categoryList, err := p.repo.GetCategories(ctx)
+	if err != nil {
+		logger.Errorf("service.post.postbycategory.categorylist", err.Error())
+
+		return nil, fmt.Errorf("failed to get categories: %w", err)
+	}
+
+	if !categoryExists(category, categoryList) {
+		logger.Info("service.post.postbycategory.PostsByCategory: category doesn't exists")
+
+		return nil, fmt.Errorf("category doesn't exists")
+	}
+
+	posts, err := p.repo.GetPostsByCategory(ctx, category)
+	if err != nil {
+		logger.Errorf("service.post.postbycategory.GetPostsByCategory", err.Error())
+
+		return nil, fmt.Errorf("failed to get post by categories: %w", err)
+	}
+
+	return posts, nil
+
 }
 
 func (p PostService) PostsByUser(ctx context.Context, user entities.User) ([]*entities.Post, error) {
@@ -43,8 +66,7 @@ func (p PostService) PostsByUser(ctx context.Context, user entities.User) ([]*en
 }
 
 func (p PostService) PostById(ctx context.Context, postID string) (*entities.Post, error) {
-	//TODO implement me
-	panic("implement me")
+	return p.repo.PostById(ctx, postID)
 }
 
 func (p PostService) CreatePost(ctx context.Context, item entities.Post, author entities.User) (*entities.Post, error) {
@@ -80,4 +102,15 @@ func (p PostService) DownVotePost(ctx context.Context, id string) (*entities.Pos
 func (p PostService) UnVote(ctx context.Context, id string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+func categoryExists(category string, categoryList []string) bool {
+	exists := false
+	for _, v := range categoryList {
+		if v == category {
+			exists = true
+			break
+		}
+	}
+	return exists
 }

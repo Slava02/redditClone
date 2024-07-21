@@ -1,8 +1,14 @@
 package repository
 
 import (
+	"errors"
 	"redditClone/internal/domain/service"
 	"redditClone/internal/repository/inMemory"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
+	ErrExists   = errors.New("exists")
 )
 
 const inmemory = 1
