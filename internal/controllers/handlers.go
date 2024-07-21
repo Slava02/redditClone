@@ -7,12 +7,12 @@ import (
 )
 
 type Handler struct {
-	service *domain.Services
+	Services *domain.Services
 }
 
 func NewHandler(service *domain.Services) *Handler {
 	return &Handler{
-		service: service,
+		Services: service,
 	}
 }
 
@@ -39,10 +39,12 @@ func (h *Handler) initAPI(router *gin.Engine) {
 }
 
 func (h *Handler) initStatic(router *gin.Engine) {
-	router.Use(static.Serve("/", static.LocalFile("./web/static", true)))
+	router.Use(static.Serve("/", static.LocalFile("./web/static/html", true)))
+	//router.StaticFile("/", "./web/static/index.html")
 	staticFiles := router.Group("/static")
 	{
 		staticFiles.Static("/css", "./web/static/css")
 		staticFiles.Static("/js", "./web/static/js")
+		staticFiles.Static("/html", "./web/static/html")
 	}
 }

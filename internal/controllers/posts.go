@@ -3,8 +3,10 @@ package controllers
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"os/user"
 	"redditClone/internal/domain/entities"
+	"redditClone/pkg/resp"
 )
 
 type Posts interface {
@@ -29,12 +31,22 @@ type Comment interface {
 func (h *Handler) initPostRoutes(api *gin.RouterGroup) {
 	posts := api.Group("/posts")
 	{
-
+		posts.GET("/", h.getAllPosts)
 	}
-	_ = posts
+
 	post := api.Group("/post")
 	{
-
+		//posts.GET("/", h.getAllPosts)
 	}
 	_ = post
+}
+
+func (h *Handler) getAllPosts(c *gin.Context) {
+	posts, err := h.Services.Posts.Posts(c)
+	if err != nil {
+		resp.NewResponse(c, http.StatusInternalServerError, err.Error())
+
+		return
+	}
+	c.JSON(http.StatusOK, posts)
 }

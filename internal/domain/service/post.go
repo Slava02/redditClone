@@ -7,7 +7,7 @@ import (
 )
 
 type PostRepository interface {
-	Posts(ctx context.Context) ([]*entities.Post, error)
+	GetAllPosts(ctx context.Context) ([]*entities.Post, error)
 	PostsByCategory(ctx context.Context, category string) ([]*entities.Post, error)
 	PostsByUser(ctx context.Context, user user.User) ([]*entities.Post, error)
 	PostById(ctx context.Context, postID string) (*entities.Post, error)
@@ -28,47 +28,56 @@ func NewPostService(repo PostRepository) *PostService {
 	}
 }
 
-func (s *PostService) Posts(ctx context.Context) ([]*entities.Post, error) {
+func (p PostService) Posts(ctx context.Context) ([]*entities.Post, error) {
+	return p.repo.GetAllPosts(ctx)
+}
+
+func (p PostService) PostsByCategory(ctx context.Context, category string) ([]*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *PostService) PostsByCategory(ctx context.Context, category string) ([]*entities.Post, error) {
+func (p PostService) PostsByUser(ctx context.Context, user entities.User) ([]*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *PostService) PostsByUser(ctx context.Context, user user.User) ([]*entities.Post, error) {
+func (p PostService) PostById(ctx context.Context, postID string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *PostService) PostById(ctx context.Context, postID string) (*entities.Post, error) {
+func (p PostService) CreatePost(ctx context.Context, item entities.Post, author entities.User) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *PostService) CreatePost(ctx context.Context, item entities.Post, author user.User) (*entities.Post, error) {
+func (p PostService) DeletePost(ctx context.Context, ID string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *PostService) DeletePost(ctx context.Context, ID string) error {
+func (p PostService) CreateComment(ctx context.Context, comment string, itemID string, author entities.User) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *PostService) UpVotePost(ctx context.Context, id string) (*entities.Post, error) {
+func (p PostService) DeleteComment(ctx context.Context, commentID string, itemID string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *PostService) DownVotePost(ctx context.Context, id string) (*entities.Post, error) {
+func (p PostService) UpVotePost(ctx context.Context, id string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *PostService) UnVote(ctx context.Context, id string) (*entities.Post, error) {
+func (p PostService) DownVotePost(ctx context.Context, id string) (*entities.Post, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p PostService) UnVote(ctx context.Context, id string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
