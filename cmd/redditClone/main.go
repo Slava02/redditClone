@@ -1,61 +1,43 @@
 package main
 
 import (
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"log/slog"
+	"log"
 	"net/http"
-	"os"
-	"redditClone/internal/handlers"
-	"redditClone/internal/handlers/items"
-	memory "redditClone/internal/storage/memory/items"
+	"redditClone/internal/controllers"
+	"redditClone/internal/domain"
+	"redditClone/internal/repository"
+	"redditClone/pkg/hash"
+	"time"
+)
+
+const (
+	configsDir = "configs"
 )
 
 func main() {
-	log := slog.New(
-		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-	)
+	// TODO: add config
 
-	log.Info("starting reddit-clone")
+	// TODO: add db init
 
-	app := &handlers.CommonHandler{Logger: log}
-	itemHandlers := &items.ItemHandler{
-		ItemsRepo:     memory.NewMemoryRepo(),
-		CommonHandler: *app,
+	hasher := hash.NewSHA1Hasher("hash_it_all_with_salt")
+
+	repos := repository.NewRepositories(1)
+	services := domain.NewServices(domain.Deps{
+		Repos:  repos,
+		Hasher: hasher,
+	})
+	handler := controllers.NewHandler(services)
+
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: handler.InitRouter(),
 	}
 
-	router := chi.NewRouter()
+	//  TODO: setup file server
 
-	router.Use(middleware.RequestID)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.URLFormat)
+	log.Println("SERVER STARTED AT", time.Now().Format(time.RFC3339))
 
-	router.Get("/api/posts/", items.List(itemHandlers))
-	router.Get("/api/posts/{category}", items.ListCategory(itemHandlers))
-	router.Get("/api/post/{id}", items.ShowPost(itemHandlers))
-
-	log.Info("setting up file server")
-
-	staticHandler := http.StripPrefix(
-		"/static/",
-		http.FileServer(http.Dir("./web/static")),
-	)
-
-	router.Handle("/static/js/{file}", staticHandler)
-	router.Handle("/static/css/{file}", staticHandler)
-	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "web/static/index.html")
-	}))
-
-	// TODO: configure from cli and env
-	address := ":8080"
-
-	log.Info("starting server", slog.String("address", address))
-
-	if err := http.ListenAndServe(address, router); err != nil {
-		log.Error("failed to start server")
+	if err := srv.ListenAndServe(); err != nil {
+		log.Fatal(err)
 	}
-
-	log.Error("server stopped")
 }
