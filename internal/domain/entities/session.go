@@ -1,9 +1,9 @@
 package entities
 
+import "time"
+
 type Session struct {
-	UserID   string
-	Username string
-	Token    string
+	ExpiresAt time.Time `json:"expiresAt"`
 }
 
 func NewSession() *Session {

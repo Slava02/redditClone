@@ -4,6 +4,7 @@ import (
 	"context"
 	"os/user"
 	"redditClone/internal/domain/entities"
+	"redditClone/internal/repository"
 )
 
 // реализуем интерфейс storage
@@ -92,7 +93,7 @@ func (p Posts) PostById(ctx context.Context, postID string) (*entities.Post, err
 	}
 
 	// TODO: figure out how to import errorNotFound from repo
-	return nil, nil
+	return nil, repository.ErrNotFound
 }
 
 func (p Posts) CreatePost(ctx context.Context, item entities.Post, author user.User) (*entities.Post, error) {
