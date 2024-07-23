@@ -2,8 +2,8 @@ package inMemory
 
 import (
 	"context"
-	"os/user"
 	"redditClone/internal/domain/entities"
+	"redditClone/internal/domain/service"
 	"redditClone/internal/repository"
 )
 
@@ -13,6 +13,8 @@ type Posts struct {
 	lastID uint32
 	data   []*entities.Post
 }
+
+var _ service.PostRepository = &Posts{}
 
 func NewPosts() *Posts {
 	initPosts := []*entities.Post{
@@ -60,12 +62,11 @@ func NewPosts() *Posts {
 	}
 }
 
-func (p Posts) GetAllPosts(ctx context.Context) ([]*entities.Post, error) {
-	//TODO add sorting
+func (p *Posts) GetAllPosts(ctx context.Context) ([]*entities.Post, error) {
 	return p.data, nil
 }
 
-func (p Posts) GetPostsByCategory(ctx context.Context, category string) ([]*entities.Post, error) {
+func (p *Posts) GetPostsByCategory(ctx context.Context, category string) ([]*entities.Post, error) {
 	//TODO add sorting
 	dataByCategory := make([]*entities.Post, 0)
 	for _, v := range p.data {
@@ -76,47 +77,46 @@ func (p Posts) GetPostsByCategory(ctx context.Context, category string) ([]*enti
 	return dataByCategory, nil
 }
 
-func (p Posts) GetCategories(ctx context.Context) ([]string, error) {
+func (p *Posts) GetCategories(ctx context.Context) ([]string, error) {
 	return CategoriesList, nil
 }
 
-func (p Posts) PostsByUser(ctx context.Context, user user.User) ([]*entities.Post, error) {
+func (p *Posts) PostsByUser(ctx context.Context, user entities.User) ([]*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p Posts) PostById(ctx context.Context, postID string) (*entities.Post, error) {
+func (p *Posts) PostById(ctx context.Context, postID string) (*entities.Post, error) {
 	for _, v := range p.data {
 		if v.ID == postID {
 			return v, nil
 		}
 	}
 
-	// TODO: figure out how to import errorNotFound from repo
 	return nil, repository.ErrNotFound
 }
 
-func (p Posts) CreatePost(ctx context.Context, item entities.Post, author user.User) (*entities.Post, error) {
+func (p *Posts) CreatePost(ctx context.Context, item entities.Post, author entities.Author) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p Posts) DeletePost(ctx context.Context, ID string) error {
+func (p *Posts) DeletePost(ctx context.Context, ID string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p Posts) UpVotePost(ctx context.Context, id string) (*entities.Post, error) {
+func (p *Posts) UpVotePost(ctx context.Context, id string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p Posts) DownVotePost(ctx context.Context, id string) (*entities.Post, error) {
+func (p *Posts) DownVotePost(ctx context.Context, id string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p Posts) UnVotePost(ctx context.Context, id string) (*entities.Post, error) {
+func (p *Posts) UnVotePost(ctx context.Context, id string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }

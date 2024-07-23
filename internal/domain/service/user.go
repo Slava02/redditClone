@@ -2,10 +2,8 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"redditClone/internal/domain/entities"
-	"redditClone/internal/repository"
 	"redditClone/pkg/auth"
 	"redditClone/pkg/hash"
 	"redditClone/pkg/logger"
@@ -24,7 +22,8 @@ type UserRepository interface {
 	AddUser(ctx context.Context, user *entities.User) error
 	SetSession(ctx context.Context, userID int, session entities.Session) error
 	NextID(ctx context.Context) int
-	CheckUserExists(ctx context.Context, userName string) bool
+	UserExists(ctx context.Context, userName string) bool
+	Get(ctx context.Context, userName, passwordHash string) (*entities.User, error)
 }
 
 type UserService struct {
@@ -43,9 +42,25 @@ func NewUserService(repo UserRepository, tokenManager auth.TokenManager, hasher 
 	}
 }
 
-func (u *UserService) Login(ctx context.Context, input *UserSignInUP) (string, error) {
-	//TODO implement me
-	panic("implement me")
+func (u *UserService) SignIn(ctx context.Context, input *UserSignInUP) (string, error) {
+	//passwordHash, err := u.hasher.Hash(input.Password)
+	//if err != nil {
+	//	return "", fmt.Errorf("couldn't get password hash: %w", err)
+	//}
+	passwordHash := input.Password
+	user, err := u.repo.Get(ctx, input.Username, passwordHash)
+	if err != nil {
+		return "", fmt.Errorf("service.User.SignIn: %w", err)
+	}
+
+	session, err := u.createSession(ctx, user.ID)
+	if err != nil {
+		logger.Error("service.User.Signup.createSession", err.Error())
+
+		return "", fmt.Errorf("service.User.Signup.createSession: couldn't create session: %w", err)
+	}
+
+	return session, nil
 }
 
 func (u *UserService) Signup(ctx context.Context, input *UserSignInUP) (string, error) {
@@ -62,22 +77,19 @@ func (u *UserService) Signup(ctx context.Context, input *UserSignInUP) (string, 
 		RegisteredAt: time.Now(),
 	}
 
-	if err := u.repo.CheckUserExists(ctx, user.Username); err != nil {
-		if errors.Is(err, repository.ErrExists) {
-			logger.Info("service.User.Signup.CheckUserExists: user already exists")
+	// TODO: пусть чекает есть ли юзер бд, в сервисах этому не место!
+	if u.repo.UserExists(ctx, user.Username) {
+		logger.Info("service.User.Signup.CheckUserExists: user already exists")
 
-			return "", repository.ErrExists
-		} else {
-			logger.Error("service.User.Signup.CheckUserExists", err.Error())
-
-			return "", fmt.Errorf("service.User.CheckUserExists: couldn't check user", err.Error())
-		}
+		return "", fmt.Errorf("user exists: %w")
 	} else if err := u.repo.AddUser(ctx, user); err != nil {
 		logger.Error("service.User.Signup", err.Error())
 
 		return "", fmt.Errorf("service.User.Signup: couldn't add user", err.Error())
 
 	}
+
+	logger.Infof("new user signed up: %+v", user)
 
 	session, err := u.createSession(ctx, user.ID)
 	if err != nil {
@@ -91,9 +103,9 @@ func (u *UserService) Signup(ctx context.Context, input *UserSignInUP) (string, 
 }
 
 func (s *UserService) createSession(ctx context.Context, userId int) (string, error) {
-	res, err := s.tokenManager.NewJWT(strconv.Itoa(userId), s.accessTokenTTL)
+	token, err := s.tokenManager.NewJWT(strconv.Itoa(userId), s.accessTokenTTL)
 	if err != nil {
-		return res, err
+		return "", fmt.Errorf("couldnt't create JWT: %w", err)
 	}
 
 	session := entities.Session{
@@ -102,5 +114,5 @@ func (s *UserService) createSession(ctx context.Context, userId int) (string, er
 
 	err = s.repo.SetSession(ctx, userId, session)
 
-	return res, err
+	return token, err
 }

@@ -6,8 +6,9 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("not found")
-	ErrExists   = errors.New("exists")
+	ErrNotFound       = errors.New("not found")
+	ErrExists         = errors.New("exists")
+	ErrBadCredentials = errors.New("invalid login or password")
 )
 
 type Repositories struct {

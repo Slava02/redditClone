@@ -17,8 +17,6 @@ type Posts interface {
 	PostById(ctx context.Context, postID string) (*entities.Post, error)
 	CreatePost(ctx context.Context, item entities.Post, author entities.User) (*entities.Post, error) // Здесь используется только category, text, title, type, нужно DTO
 	DeletePost(ctx context.Context, ID string) error
-	CreateComment(ctx context.Context, comment string, itemID string, author entities.User) (*entities.Post, error)
-	DeleteComment(ctx context.Context, commentID string, itemID string) (*entities.Post, error)
 	UpVotePost(ctx context.Context, id string) (*entities.Post, error)
 	DownVotePost(ctx context.Context, id string) (*entities.Post, error)
 	UnVote(ctx context.Context, id string) (*entities.Post, error)

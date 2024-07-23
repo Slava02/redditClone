@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"os/user"
 	"redditClone/internal/domain/entities"
 	"redditClone/pkg/logger"
 )
@@ -12,9 +11,9 @@ type PostRepository interface {
 	GetAllPosts(ctx context.Context) ([]*entities.Post, error)
 	GetPostsByCategory(ctx context.Context, category string) ([]*entities.Post, error)
 	GetCategories(ctx context.Context) ([]string, error)
-	PostsByUser(ctx context.Context, user user.User) ([]*entities.Post, error)
+	PostsByUser(ctx context.Context, user entities.User) ([]*entities.Post, error)
 	PostById(ctx context.Context, postID string) (*entities.Post, error)
-	CreatePost(ctx context.Context, item entities.Post, author user.User) (*entities.Post, error) // Здесь используется только category, text, title, type, нужно DTO
+	CreatePost(ctx context.Context, item entities.Post, author entities.Author) (*entities.Post, error) // Здесь используется только category, text, title, type, нужно DTO
 	DeletePost(ctx context.Context, ID string) error
 	UpVotePost(ctx context.Context, id string) (*entities.Post, error)
 	DownVotePost(ctx context.Context, id string) (*entities.Post, error)
@@ -75,16 +74,6 @@ func (p PostService) CreatePost(ctx context.Context, item entities.Post, author 
 }
 
 func (p PostService) DeletePost(ctx context.Context, ID string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PostService) CreateComment(ctx context.Context, comment string, itemID string, author entities.User) (*entities.Post, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p PostService) DeleteComment(ctx context.Context, commentID string, itemID string) (*entities.Post, error) {
 	//TODO implement me
 	panic("implement me")
 }

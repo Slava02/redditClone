@@ -12,20 +12,14 @@ import (
 )
 
 type User interface {
-	Login(context.Context, *service.UserSignInUP) (string, error)
+	SignIn(context.Context, *service.UserSignInUP) (string, error)
 	Signup(context.Context, *service.UserSignInUP) (string, error)
 }
 
 func (h *Handler) initUsersRoutes(api *gin.RouterGroup) {
-	api.POST("/sign-up", h.userSignUp)
+	api.POST("/register", h.userSignUp)
+	api.POST("/login", h.userLogin)
 
-	users := api.Group("/users")
-	{
-		//users.POST("/sign-up", h.userSignUp)
-		//users.POST("/sign-in", h.userSignIn)
-
-	}
-	_ = users
 }
 
 func (h *Handler) userSignUp(c *gin.Context) {
@@ -55,5 +49,24 @@ func (h *Handler) userSignUp(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, token)
+	// TODO узнать как возвращать токен по-человечески
+	c.JSON(http.StatusOK, map[string]interface{}{"token": token})
+}
+
+func (h *Handler) userLogin(c *gin.Context) {
+	var inp *service.UserSignInUP
+	if err := c.BindJSON(&inp); err != nil {
+		logger.Errorf("controllers.user.signin: ", err.Error())
+
+		resp.NewResponse(c, http.StatusBadRequest, "invalid body input")
+
+		return
+	}
+
+	token, err := h.Services.User.SignIn(c.Request.Context(), inp)
+	if errors.Is(err, repository.ErrBadCredentials) {
+		c.JSON(http.StatusUnauthorized, map[string]interface{}{"message": "invalid login or password"})
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{"token": token})
 }
