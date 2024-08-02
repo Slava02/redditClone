@@ -43,6 +43,7 @@ func NewUserService(repo UserRepository, tokenManager auth.TokenManager, hasher 
 }
 
 func (u *UserService) SignIn(ctx context.Context, input *UserSignInUP) (string, error) {
+	//  TODO не забыть раскомментировать хешер когда доделаю авторизацию нормально
 	//passwordHash, err := u.hasher.Hash(input.Password)
 	//if err != nil {
 	//	return "", fmt.Errorf("couldn't get password hash: %w", err)
@@ -64,11 +65,12 @@ func (u *UserService) SignIn(ctx context.Context, input *UserSignInUP) (string, 
 }
 
 func (u *UserService) Signup(ctx context.Context, input *UserSignInUP) (string, error) {
-	passwordHash, err := u.hasher.Hash(input.Password)
-	if err != nil {
-		return "", fmt.Errorf("couldn't get password hash: %w", err)
-	}
+	//passwordHash, err := u.hasher.Hash(input.Password)
+	//if err != nil {
+	//	return "", fmt.Errorf("couldn't get password hash: %w", err)
+	//}
 
+	passwordHash := input.Password
 	// TODO: пока не очень понятно как nextID поведет себя с БД - адо подумать тут создавать юзера или на слое репозитория
 	user := &entities.User{
 		ID:           u.repo.NextID(ctx),

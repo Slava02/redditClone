@@ -1,0 +1,10 @@
+HTTPServerConfig:
+  address: "localhost:8080"
+  timeout: 4s
+  idle_timeout: 60s
+
+AuthConfig:
+  access_token_ttl: 24h
+
+RepoConfig:
+  type: 1

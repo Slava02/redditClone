@@ -18,20 +18,26 @@ var _ service.UserRepository = &Users{}
 
 func NewUsers() *Users {
 	users := map[string]*entities.User{
-		"test": {
+		"test1234": {
 			ID:           1,
-			Username:     "test",
+			Username:     "test1234",
 			Password:     "test1234",
 			RegisteredAt: time.Now(),
 		},
+		"test123": {
+			ID:           2,
+			Username:     "test123",
+			Password:     "test123",
+			RegisteredAt: time.Now(),
+		},
 	}
-	return &Users{users: users}
+	return &Users{counterID: 2, users: users}
 }
 
 func (u *Users) Get(ctx context.Context, userName, passwordHash string) (*entities.User, error) {
 	user, ok := u.users[userName]
 
-	logger.Infof("Getting user: %s Pass: %s", userName, passwordHash)
+	logger.Infof("Getting user: %s Pass: %s All users: %+v", userName, passwordHash, u.users[userName])
 	//  TODO: не секьюр, надо как-то отрефакторить
 	if !ok || passwordHash != user.Password {
 		return nil, repository.ErrBadCredentials
