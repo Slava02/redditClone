@@ -11,37 +11,38 @@ import (
 	"redditClone/pkg/resp"
 )
 
-type User interface {
-	SignIn(context.Context, *service.UserSignInUP) (string, error)
-	Signup(context.Context, *service.UserSignInUP) (string, error)
+type Auth interface {
+	SignIn(context.Context, *service.Credentials) (string, error)
+	SignUp(context.Context, *service.Credentials) (string, error)
 }
 
-func (h *Handler) initUsersRoutes(api *gin.RouterGroup) {
-	api.POST("/register", h.userSignUp)
-	api.POST("/login", h.userLogin)
-
+func (h *Handler) initAuthRoutes(api *gin.RouterGroup) {
+	api.POST("/register", h.RegisterUser)
+	api.POST("/login", h.LoginUser)
 }
 
-func (h *Handler) userSignUp(c *gin.Context) {
-	var inp *service.UserSignInUP
+func (h *Handler) RegisterUser(c *gin.Context) {
+	//  TODO подумать над валидацией полченных данных
+	var inp *service.Credentials
 	if err := c.BindJSON(&inp); err != nil {
-		logger.Errorf("controllers.user.signup: ", err.Error())
+		logger.Errorf("controllers.user.register: ", err.Error())
 
 		resp.NewResponse(c, http.StatusBadRequest, "invalid body input")
 
 		return
 	}
 
-	token, err := h.Services.User.Signup(c.Request.Context(), inp)
+	//  TODO регистрация пользователя не должна возвращать токен, разнести на операции
+	token, err := h.Services.User.SignUp(c.Request.Context(), inp)
 	if err != nil {
 		if errors.Is(err, repository.ErrExists) {
-			logger.Info("controllers.user.signup: ", err.Error())
+			logger.Info("controllers.user.register: ", err.Error())
 
 			resp.NewResponse(c, http.StatusUnprocessableEntity, "user already exists")
 
 			return
 		} else {
-			logger.Errorf("controllers.user.signup: ", err.Error())
+			logger.Errorf("controllers.user.register: ", err.Error())
 
 			resp.NewResponse(c, http.StatusBadRequest, "internal service error")
 
@@ -53,10 +54,10 @@ func (h *Handler) userSignUp(c *gin.Context) {
 	c.JSON(http.StatusOK, map[string]interface{}{"token": token})
 }
 
-func (h *Handler) userLogin(c *gin.Context) {
-	var inp *service.UserSignInUP
+func (h *Handler) LoginUser(c *gin.Context) {
+	var inp *service.Credentials
 	if err := c.BindJSON(&inp); err != nil {
-		logger.Errorf("controllers.user.signin: ", err.Error())
+		logger.Errorf("controllers.user.Login: ", err.Error())
 
 		resp.NewResponse(c, http.StatusBadRequest, "invalid body input")
 

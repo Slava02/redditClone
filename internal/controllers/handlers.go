@@ -34,7 +34,7 @@ func (h *Handler) initAPI(router *gin.Engine) {
 	api := router.Group("/api")
 	{
 		h.initPostRoutes(api)
-		h.initUsersRoutes(api)
+		h.initAuthRoutes(api)
 	}
 }
 

@@ -12,13 +12,13 @@ import (
 )
 
 // (?) DTO - where to store them
-type UserSignInUP struct {
+type Credentials struct {
 	Username string
 	Password string
 }
 
 type UserRepository interface {
-	//Login(ctx context.Context, userCredentials *UserSignInUP) error
+	//Login(ctx context.Context, userCredentials *Credentials) error
 	AddUser(ctx context.Context, user *entities.User) error
 	SetSession(ctx context.Context, userID int, session entities.Session) error
 	NextID(ctx context.Context) int
@@ -42,8 +42,8 @@ func NewUserService(repo UserRepository, tokenManager auth.TokenManager, hasher 
 	}
 }
 
-func (u *UserService) SignIn(ctx context.Context, input *UserSignInUP) (string, error) {
-	//  TODO не забыть раскомментировать хешер когда доделаю авторизацию нормально
+func (u *UserService) SignIn(ctx context.Context, input *Credentials) (string, error) {
+	//  TODO раскомментировать хешер когда доделаю авторизацию нормально
 	//passwordHash, err := u.hasher.Hash(input.Password)
 	//if err != nil {
 	//	return "", fmt.Errorf("couldn't get password hash: %w", err)
@@ -56,15 +56,15 @@ func (u *UserService) SignIn(ctx context.Context, input *UserSignInUP) (string, 
 
 	session, err := u.createSession(ctx, user.ID)
 	if err != nil {
-		logger.Error("service.User.Signup.createSession", err.Error())
+		logger.Error("service.User.SignUp.createSession", err.Error())
 
-		return "", fmt.Errorf("service.User.Signup.createSession: couldn't create session: %w", err)
+		return "", fmt.Errorf("service.User.SignUp.createSession: couldn't create session: %w", err)
 	}
 
 	return session, nil
 }
 
-func (u *UserService) Signup(ctx context.Context, input *UserSignInUP) (string, error) {
+func (u *UserService) SignUp(ctx context.Context, input *Credentials) (string, error) {
 	//passwordHash, err := u.hasher.Hash(input.Password)
 	//if err != nil {
 	//	return "", fmt.Errorf("couldn't get password hash: %w", err)
@@ -81,13 +81,13 @@ func (u *UserService) Signup(ctx context.Context, input *UserSignInUP) (string, 
 
 	// TODO: пусть чекает есть ли юзер бд, в сервисах этому не место!
 	if u.repo.UserExists(ctx, user.Username) {
-		logger.Info("service.User.Signup.CheckUserExists: user already exists")
+		logger.Info("service.User.SignUp.CheckUserExists: user already exists")
 
 		return "", fmt.Errorf("user exists: %w")
 	} else if err := u.repo.AddUser(ctx, user); err != nil {
-		logger.Error("service.User.Signup", err.Error())
+		logger.Error("service.User.SignUp", err.Error())
 
-		return "", fmt.Errorf("service.User.Signup: couldn't add user", err.Error())
+		return "", fmt.Errorf("service.User.SignUp: couldn't add user", err.Error())
 
 	}
 
@@ -95,9 +95,9 @@ func (u *UserService) Signup(ctx context.Context, input *UserSignInUP) (string, 
 
 	session, err := u.createSession(ctx, user.ID)
 	if err != nil {
-		logger.Error("service.User.Signup.createSession", err.Error())
+		logger.Error("service.User.SignUp.createSession", err.Error())
 
-		return "", fmt.Errorf("service.User.Signup.createSession: couldn't create session", err.Error())
+		return "", fmt.Errorf("service.User.SignUp.createSession: couldn't create session", err.Error())
 	}
 
 	return session, nil

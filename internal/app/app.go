@@ -14,7 +14,6 @@ import (
 	"redditClone/pkg/hash"
 	"redditClone/pkg/logger"
 	"syscall"
-	"time"
 )
 
 func Run(cfg Config) {
@@ -25,7 +24,7 @@ func Run(cfg Config) {
 
 		return
 	}
-	accessTokenTTL := time.Duration(24 * time.Hour)
+	accessTokenTTL := cfg.AccessTokenTTL
 
 	repos := NewRepositories(cfg.RepoConfig.Type)
 	services := domain.NewServices(domain.Deps{
