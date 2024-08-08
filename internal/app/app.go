@@ -48,7 +48,13 @@ func Run(cfg Config) {
 		return cfg.SignerConfig.SigningKey, nil
 	})
 
-	handler := handlers.NewHandler(usecases, authManager)
+	//  TODO: is it actually worth to shutdown the whole app?
+	validator, err := handlers.NewValidator()
+	if err != nil {
+		logrus.Fatalf("could't init validator")
+	}
+
+	handler := handlers.NewHandler(usecases, authManager, validator)
 
 	//  INIT AND RUN SERVER
 	apiAddress := cfg.HTTPServerConfig.Address

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"redditClone/internal/domain/entities"
 	"redditClone/internal/interfaces"
 )
@@ -19,8 +20,14 @@ func NewPostUseCase(service interfaces.IPostService) *PostUseCase {
 }
 
 func (p PostUseCase) GetPosts(ctx context.Context) ([]entities.PostExtend, error) {
+	const op = "usecase.GetPosts"
 
-	panic("implement me")
+	posts, err := p.service.GetPosts(ctx)
+	if err != nil {
+		return []entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return posts, nil
 }
 
 func (p PostUseCase) AddPost(ctx context.Context, post entities.Post) (entities.PostExtend, error) {
@@ -29,8 +36,14 @@ func (p PostUseCase) AddPost(ctx context.Context, post entities.Post) (entities.
 }
 
 func (p PostUseCase) GetPostsWithCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
+	const op = "usecase.GetPostsWithCategory"
 
-	panic("implement me")
+	posts, err := p.service.GetPostsWithCategory(ctx, category)
+	if err != nil {
+		return []entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return posts, nil
 }
 
 func (p PostUseCase) GetPostsWithUser(ctx context.Context, username string) ([]entities.PostExtend, error) {

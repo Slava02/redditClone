@@ -2,6 +2,9 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"net/http"
+	"redditClone/pkg/logger"
 )
 
 func (h *Handler) initPostRoutes(api *gin.RouterGroup) {
@@ -18,8 +21,19 @@ func (h *Handler) initPostRoutes(api *gin.RouterGroup) {
 }
 
 func (h *Handler) GetPosts(c *gin.Context) {
+	const op = "controllers.posts.GetPosts: "
 
-	panic("implement me")
+	posts, err := h.Usecases.Posts.GetPosts(c)
+
+	if err != nil {
+		logger.Errorf(op, err.Error())
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, posts)
 }
 
 func (h *Handler) AddPost(c *gin.Context) {
@@ -28,8 +42,27 @@ func (h *Handler) AddPost(c *gin.Context) {
 }
 
 func (h *Handler) GetPostsWithCategory(c *gin.Context) {
+	const op = "controllers.posts.GetPostsWithCategory: "
 
-	panic("implement me")
+	category := c.Param("category")
+	if err := h.InputValidator.Var(category, "categoryValidation"); err != nil {
+		logger.Errorf(op+"couldn't validate category", err.(validator.ValidationErrors).Error())
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+
+		return
+	}
+
+	posts, err := h.Usecases.Posts.GetPostsWithCategory(c, category)
+	if err != nil {
+		logger.Errorf(op, err.Error())
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, posts)
 }
 
 func (h *Handler) GetPostsWithUser(c *gin.Context) {

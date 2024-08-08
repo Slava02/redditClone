@@ -4,6 +4,7 @@ import (
 	"context"
 	"redditClone/internal/domain/entities"
 	"redditClone/internal/interfaces"
+	"sync"
 	"time"
 )
 
@@ -11,13 +12,14 @@ import (
 
 type Posts struct {
 	lastID uint32
-	data   []*entities.PostExtend
+	mutex  sync.RWMutex
+	data   []entities.PostExtend
 }
 
 var _ interfaces.IPostRepository = &Posts{}
 
 func NewPosts() *Posts {
-	initPosts := []*entities.PostExtend{
+	initPosts := []entities.PostExtend{
 		{
 			ID: "656b54d31d06de00132f7ddc",
 			Post: entities.Post{
@@ -51,7 +53,7 @@ func NewPosts() *Posts {
 			},
 		},
 	}
-	data := make([]*entities.PostExtend, 0, 10)
+	data := make([]entities.PostExtend, 0, 10)
 	return &Posts{
 		lastID: 2,
 		data:   append(data, initPosts...),
@@ -69,8 +71,16 @@ func (p Posts) Get(ctx context.Context, postID string) (entities.PostExtend, err
 }
 
 func (p Posts) GetWhereCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
 
-	panic("implement me")
+	postByCategory := make([]entities.PostExtend, 0)
+	for _, v := range p.data {
+		if v.Category == category {
+			postByCategory = append(postByCategory, v)
+		}
+	}
+	return postByCategory, nil
 }
 
 func (p Posts) GetWhereUsername(ctx context.Context, username string) ([]entities.PostExtend, error) {
@@ -79,8 +89,10 @@ func (p Posts) GetWhereUsername(ctx context.Context, username string) ([]entitie
 }
 
 func (p Posts) GetAll(ctx context.Context) ([]entities.PostExtend, error) {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
 
-	panic("implement me")
+	return p.data, nil
 }
 
 func (p Posts) Update(ctx context.Context, postID string, newPost entities.PostExtend) error {

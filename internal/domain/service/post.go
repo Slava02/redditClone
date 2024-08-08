@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"redditClone/internal/domain/entities"
 	"redditClone/internal/interfaces"
 )
@@ -25,13 +26,25 @@ func (p PostService) GetPost(ctx context.Context, postID string) (entities.PostE
 }
 
 func (p PostService) GetPosts(ctx context.Context) ([]entities.PostExtend, error) {
+	const op = "service.GetPosts"
 
-	panic("implement me")
+	posts, err := p.repo.GetAll(ctx)
+	if err != nil {
+		return []entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return posts, nil
 }
 
 func (p PostService) GetPostsWithCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
+	const op = "service.GetPostsWithCategory"
 
-	panic("implement me")
+	posts, err := p.repo.GetWhereCategory(ctx, category)
+	if err != nil {
+		return []entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return posts, nil
 }
 
 func (p PostService) GetPostsWithUser(ctx context.Context, username string) ([]entities.PostExtend, error) {
