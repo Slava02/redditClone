@@ -3,19 +3,23 @@ package service
 import (
 	"context"
 	"redditClone/internal/domain/entities"
+	"redditClone/internal/interfaces"
 )
 
-type CommentRepository interface {
-	CreateComment(ctx context.Context, comment string, itemID string, author entities.User) (*entities.Post, error)
-	DeleteComment(ctx context.Context, commentID string, itemID string) (*entities.Post, error)
-}
-
 type CommentService struct {
-	repo CommentRepository
+	repo interfaces.IPostRepository
 }
 
-func NewCommentService(repo CommentRepository) *CommentService {
+func NewCommentService(repo interfaces.IPostRepository) *CommentService {
 	return &CommentService{
 		repo: repo,
 	}
+}
+
+func (c CommentService) AddComment(ctx context.Context, postID string, comment entities.CommentExtend) (entities.PostExtend, error) {
+	panic("implement me")
+}
+
+func (c CommentService) DeleteComment(ctx context.Context, username string, postID string, commentID string) (entities.PostExtend, error) {
+	panic("implement me")
 }

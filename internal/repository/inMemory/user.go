@@ -3,68 +3,43 @@ package inMemory
 import (
 	"context"
 	"redditClone/internal/domain/entities"
-	"redditClone/internal/domain/service"
-	"redditClone/internal/repository"
-	"redditClone/pkg/logger"
-	"time"
+	"redditClone/internal/interfaces"
 )
 
 type Users struct {
 	counterID int
-	users     map[string]*entities.User
+	users     map[string]*entities.UserExtend
 }
 
-var _ service.UserRepository = &Users{}
+var _ interfaces.IUserRepository = &Users{}
 
 func NewUsers() *Users {
-	users := map[string]*entities.User{
+	users := map[string]*entities.UserExtend{
 		"test1234": {
-			ID:           1,
-			Username:     "test1234",
-			Password:     "test1234",
-			RegisteredAt: time.Now(),
-		},
-		"test123": {
-			ID:           2,
-			Username:     "test123",
-			Password:     "test123",
-			RegisteredAt: time.Now(),
+			ID: "userid775slava",
+			User: entities.User{
+				Username: "test1234",
+				Password: "test1234",
+			},
 		},
 	}
-	return &Users{counterID: 2, users: users}
-}
-
-func (u *Users) Get(ctx context.Context, userName, passwordHash string) (*entities.User, error) {
-	user, ok := u.users[userName]
-
-	logger.Infof("Getting user: %s Pass: %s All users: %+v", userName, passwordHash, u.users[userName])
-	//  TODO: не секьюр, надо как-то отрефакторить
-	if !ok || passwordHash != user.Password {
-		return nil, repository.ErrBadCredentials
+	return &Users{
+		counterID: 2,
+		users:     users,
 	}
-
-	return user, nil
 }
 
-func (u *Users) UserExists(ctx context.Context, userName string) bool {
-	_, exists := u.users[userName]
+func (u Users) Add(ctx context.Context, user entities.UserExtend) error {
 
-	return exists
+	panic("implement me")
 }
 
-func (u *Users) SetSession(ctx context.Context, userID int, session entities.Session) error {
-	//  TODO: реализовать stateful хранение сессий и подумать в каком сервисе это сделать
-	return nil
+func (u Users) Get(ctx context.Context, username string) (entities.UserExtend, error) {
+
+	panic("implement me")
 }
 
-func (u *Users) NextID(ctx context.Context) int {
-	return u.counterID + 1
-}
+func (u Users) Contains(ctx context.Context, username string) (bool, error) {
 
-func (u *Users) AddUser(ctx context.Context, user *entities.User) error {
-	u.users[user.Username] = user
-
-	u.counterID++
-
-	return nil
+	panic("implement me")
 }

@@ -2,39 +2,55 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"os/signal"
-	"redditClone/internal/controllers"
-	"redditClone/internal/domain"
+	"redditClone/internal/controllers/auth"
+	"redditClone/internal/controllers/handlers"
+	"redditClone/internal/domain/service"
+	"redditClone/internal/domain/usecase"
 	"redditClone/internal/repository"
 	"redditClone/internal/repository/inMemory"
-	"redditClone/pkg/auth"
 	"redditClone/pkg/hash"
-	"redditClone/pkg/logger"
 	"syscall"
 )
 
+const (
+	inMem = 1
+)
+
 func Run(cfg Config) {
-	hasher := hash.NewSHA1Hasher(cfg.SignerConfig.SigningKey)
-	tokenManager, err := auth.NewManager(cfg.SignerConfig.SigningKey)
-	if err != nil {
-		logger.Error(err)
-
-		return
-	}
-	accessTokenTTL := cfg.AccessTokenTTL
-
+	//  INIT REPOS
 	repos := NewRepositories(cfg.RepoConfig.Type)
-	services := domain.NewServices(domain.Deps{
-		Repos:          repos,
-		Hasher:         hasher,
-		TokenManager:   tokenManager,
-		AccessTokenTTL: accessTokenTTL,
-	})
-	handler := controllers.NewHandler(services)
 
+	//  INIT SERVICES
+	services := service.NewServices(repos)
+
+	//  INIT DEPENDENCIES
+	// TODO: add hasher to deps
+	hasher := hash.NewSHA1Hasher(cfg.SignerConfig.SigningKey)
+	_ = hasher
+
+	//  INIT USECASES
+	usecases := usecase.NewUseCase(&usecase.Deps{
+		Services: services,
+	})
+
+	//  INIT CONTROLLERS
+	authManager := auth.NewAuthManager([]byte(cfg.SignerConfig.SigningKey), cfg.AccessTokenTTL, func(token *jwt.Token) (interface{}, error) {
+		method, ok := token.Method.(*jwt.SigningMethodHMAC)
+		if !ok || method.Alg() != "HS256" {
+			return nil, fmt.Errorf("bad sign method")
+		}
+		return cfg.SignerConfig.SigningKey, nil
+	})
+
+	handler := handlers.NewHandler(usecases, authManager)
+
+	//  INIT AND RUN SERVER
 	apiAddress := cfg.HTTPServerConfig.Address
 	srv := &http.Server{
 		Addr:    apiAddress,
@@ -42,29 +58,29 @@ func Run(cfg Config) {
 	}
 
 	go func() {
-		if err = srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logrus.Fatalln(err)
 		}
 	}()
 	logrus.Infof("http server started: %s", apiAddress)
 
+	//  GRACEFULL SHUTDOWN
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
 
 	logrus.Infoln("app is shutting down")
-	if err = srv.Shutdown(context.Background()); err != nil {
+	if err := srv.Shutdown(context.Background()); err != nil {
 		logrus.Errorln(err)
 	}
 }
 
-func NewRepositories(t int) *repository.Repositories {
-	switch t {
-	case 1:
+func NewRepositories(repoType int) *repository.Repositories {
+	switch repoType {
+	case inMem:
 		return &repository.Repositories{
-			CommentRepository: inMemory.NewComments(),
-			PostRepository:    inMemory.NewPosts(),
-			UserRepository:    inMemory.NewUsers(),
+			PostRepository: inMemory.NewPosts(),
+			UserRepository: inMemory.NewUsers(),
 		}
 	default:
 		return nil

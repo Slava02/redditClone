@@ -2,7 +2,7 @@ package repository
 
 import (
 	"errors"
-	"redditClone/internal/domain/service"
+	"redditClone/internal/interfaces"
 )
 
 var (
@@ -12,7 +12,6 @@ var (
 )
 
 type Repositories struct {
-	CommentRepository service.CommentRepository
-	PostRepository    service.PostRepository
-	UserRepository    service.UserRepository
+	PostRepository interfaces.IPostRepository
+	UserRepository interfaces.IUserRepository
 }

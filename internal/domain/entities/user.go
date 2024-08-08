@@ -1,19 +1,20 @@
 package entities
 
-import "time"
-
+// pure business logic
 type User struct {
-	ID           int
-	Username     string
-	Password     string
-	RegisteredAt time.Time
+	Username string
+	Password string
 }
 
-func NewUser(id int, username, password string, registrationTime time.Time) *User {
-	return &User{
-		ID:           id,
-		Username:     username,
-		Password:     password,
-		RegisteredAt: registrationTime,
+// business logic with implementation logic
+type UserExtend struct {
+	User
+	ID string
+}
+
+func NewUserExtend(user User, id string) *UserExtend {
+	return &UserExtend{
+		User: user,
+		ID:   id,
 	}
 }

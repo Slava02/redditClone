@@ -1,24 +1,33 @@
 package entities
 
+// pure business logic
 type Post struct {
-	Category         string     `json:"category"`
-	Text             string     `json:"text"`
-	Title            string     `json:"title"`
-	Type             string     `json:"type"`
-	ID               string     `json:"id"`
-	URL              string     `json:"url"`
-	Views            uint32     `json:"views"`
-	Created          string     `json:"created"`
-	Author           Author     `json:"author"`
-	Score            int        `json:"score"`
-	UpvotePercentage int        `json:"upvotePercentage"`
-	Votes            []*Vote    `json:"votes"`
-	Comments         []*Comment `json:"comments"`
-	CommentLastID    uint32     `json:"-"`
+	Category         string           `json:"category"`
+	Text             string           `json:"text"`
+	Title            string           `json:"title"`
+	Type             string           `json:"type"`
+	URL              string           `json:"url"`
+	Views            uint32           `json:"views"`
+	Created          string           `json:"created"`
+	Author           Author           `json:"author"`
+	Score            int              `json:"score"`
+	UpvotePercentage int              `json:"upvotePercentage"`
+	Votes            []*Vote          `json:"votes"`
+	Comments         []*CommentExtend `json:"comments"`
+	CommentLastID    uint32           `json:"-"`
 }
 
-func NewPost() *Post {
-	return &Post{}
+// business logic with implementation logic
+type PostExtend struct {
+	Post `bson:"post"`
+	ID   string `json:"id" bson:"id"`
+}
+
+func NewPostExtend(post Post, id string) *PostExtend {
+	return &PostExtend{
+		Post: post,
+		ID:   id,
+	}
 }
 
 type Author struct {
@@ -31,8 +40,8 @@ func NewAuthor() *Author {
 }
 
 type Vote struct {
-	User string `json:"user"`
-	Vote int    `json:"vote"`
+	UserID string `json:"user"`
+	Vote   int    `json:"vote"`
 }
 
 func NewVote() *Vote {
