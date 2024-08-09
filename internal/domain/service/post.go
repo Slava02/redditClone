@@ -23,11 +23,20 @@ func (p PostService) AddPost(ctx context.Context, post entities.PostExtend) erro
 }
 
 func (p PostService) GetPost(ctx context.Context, postID string) (entities.PostExtend, error) {
-	panic("implement me")
+	const op = "internal.service.GetPost: "
+
+	post, err := p.repo.Get(ctx, postID)
+	if err != nil {
+		logger.Errorf(op, err.Error())
+
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	return post, nil
 }
 
 func (p PostService) GetPosts(ctx context.Context) ([]entities.PostExtend, error) {
-	const op = "service.GetPosts: "
+	const op = "internal.service.GetPosts: "
 
 	posts, err := p.repo.GetAll(ctx)
 	if err != nil {
@@ -40,7 +49,7 @@ func (p PostService) GetPosts(ctx context.Context) ([]entities.PostExtend, error
 }
 
 func (p PostService) GetPostsWithCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
-	const op = "service.GetPostsWithCategory: "
+	const op = "internal.service.GetPostsWithCategory: "
 
 	posts, err := p.repo.GetWhereCategory(ctx, category)
 	if err != nil {

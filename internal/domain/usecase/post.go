@@ -20,7 +20,7 @@ func NewPostUseCase(service interfaces.IPostService) *PostUseCase {
 }
 
 func (p PostUseCase) GetPosts(ctx context.Context) ([]entities.PostExtend, error) {
-	const op = "usecase.GetPosts"
+	const op = "internal.usecase.GetPosts"
 
 	posts, err := p.service.GetPosts(ctx)
 	if err != nil {
@@ -36,7 +36,7 @@ func (p PostUseCase) AddPost(ctx context.Context, post entities.Post) (entities.
 }
 
 func (p PostUseCase) GetPostsWithCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
-	const op = "usecase.GetPostsWithCategory"
+	const op = "internal.usecase.GetPostsWithCategory"
 
 	posts, err := p.service.GetPostsWithCategory(ctx, category)
 	if err != nil {
@@ -52,8 +52,14 @@ func (p PostUseCase) GetPostsWithUser(ctx context.Context, username string) ([]e
 }
 
 func (p PostUseCase) GetPost(ctx context.Context, postID string) (entities.PostExtend, error) {
+	const op = "internal.usecase.GetPost"
 
-	panic("implement me")
+	post, err := p.service.GetPost(ctx, postID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	return post, nil
 }
 
 func (p PostUseCase) DeletePost(ctx context.Context, username string, postID string) error {

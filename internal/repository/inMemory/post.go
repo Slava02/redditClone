@@ -2,8 +2,11 @@ package inMemory
 
 import (
 	"context"
+	"fmt"
 	"redditClone/internal/domain/entities"
 	"redditClone/internal/interfaces"
+	"redditClone/internal/repository"
+	"redditClone/pkg/logger"
 	"sync"
 	"time"
 )
@@ -66,11 +69,25 @@ func (p Posts) Add(ctx context.Context, post entities.PostExtend) error {
 }
 
 func (p Posts) Get(ctx context.Context, postID string) (entities.PostExtend, error) {
+	const op = "repo.post.Get: "
 
-	panic("implement me")
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	for _, v := range p.data {
+		if v.ID == postID {
+			return v, nil
+		}
+	}
+
+	logger.Info(op, fmt.Sprintf("POST NOT FOUND (postID: %s)", postID))
+
+	return entities.PostExtend{}, fmt.Errorf("%w", repository.ErrNotFound)
 }
 
 func (p Posts) GetWhereCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
+	const op = "repo.post.GetWhereCategory: "
+
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 
@@ -80,6 +97,7 @@ func (p Posts) GetWhereCategory(ctx context.Context, category string) ([]entitie
 			postByCategory = append(postByCategory, v)
 		}
 	}
+
 	return postByCategory, nil
 }
 
@@ -89,6 +107,8 @@ func (p Posts) GetWhereUsername(ctx context.Context, username string) ([]entitie
 }
 
 func (p Posts) GetAll(ctx context.Context) ([]entities.PostExtend, error) {
+	const op = "repo.post.GetAll: "
+
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 
