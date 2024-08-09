@@ -29,7 +29,6 @@ func (h *Handler) GetPosts(c *gin.Context) {
 		logger.Errorf(op, err.Error())
 
 		c.AbortWithStatus(http.StatusInternalServerError)
-
 		return
 	}
 
@@ -49,7 +48,6 @@ func (h *Handler) GetPostsWithCategory(c *gin.Context) {
 		logger.Errorf(op+"couldn't validate category", err.(validator.ValidationErrors).Error())
 
 		c.AbortWithStatus(http.StatusInternalServerError)
-
 		return
 	}
 
@@ -58,7 +56,6 @@ func (h *Handler) GetPostsWithCategory(c *gin.Context) {
 		logger.Errorf(op, err.Error())
 
 		c.AbortWithStatus(http.StatusInternalServerError)
-
 		return
 	}
 
@@ -71,8 +68,23 @@ func (h *Handler) GetPostsWithUser(c *gin.Context) {
 }
 
 func (h *Handler) GetPost(c *gin.Context) {
-
-	panic("implement me")
+	//const op = "controllers.posts.GetPost: "
+	//
+	//id, err := c.Get("id")
+	//if err != nil {
+	//
+	//}
+	//
+	//posts, err := h.Usecases.Posts.GetPost(c, id)
+	//
+	//if err != nil {
+	//	logger.Errorf(op, err.Error())
+	//
+	//	c.AbortWithStatus(http.StatusInternalServerError)
+	//	return
+	//}
+	//
+	//c.JSON(http.StatusOK, posts)
 }
 
 func (h *Handler) DeletePost(c *gin.Context) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"redditClone/internal/domain/entities"
 	"redditClone/internal/interfaces"
+	"redditClone/pkg/logger"
 )
 
 type PostService struct {
@@ -26,22 +27,26 @@ func (p PostService) GetPost(ctx context.Context, postID string) (entities.PostE
 }
 
 func (p PostService) GetPosts(ctx context.Context) ([]entities.PostExtend, error) {
-	const op = "service.GetPosts"
+	const op = "service.GetPosts: "
 
 	posts, err := p.repo.GetAll(ctx)
 	if err != nil {
-		return []entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+		logger.Errorf(op, err.Error())
+
+		return []entities.PostExtend{}, fmt.Errorf("%w", err)
 	}
 
 	return posts, nil
 }
 
 func (p PostService) GetPostsWithCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
-	const op = "service.GetPostsWithCategory"
+	const op = "service.GetPostsWithCategory: "
 
 	posts, err := p.repo.GetWhereCategory(ctx, category)
 	if err != nil {
-		return []entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+		logger.Errorf(op, err.Error())
+
+		return []entities.PostExtend{}, fmt.Errorf("%w", err)
 	}
 
 	return posts, nil
