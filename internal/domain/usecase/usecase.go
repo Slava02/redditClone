@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"redditClone/internal/domain/service"
+	"redditClone/pkg/hash"
 )
 
 type Usecase struct {
@@ -11,13 +12,14 @@ type Usecase struct {
 }
 
 type Deps struct {
-	Services *service.Services
+	Services       *service.Services
+	PasswordHasher hash.PasswordHasher
 }
 
 func NewUseCase(deps *Deps) *Usecase {
 	return &Usecase{
 		Comments: *NewCommentUseCase(deps.Services.Comments),
 		Posts:    *NewPostUseCase(deps.Services.Posts),
-		Users:    *NewUserUseCase(deps.Services.Users),
+		Users:    *NewUserUseCase(deps.Services.Users, deps.PasswordHasher),
 	}
 }

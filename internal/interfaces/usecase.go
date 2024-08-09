@@ -6,8 +6,8 @@ import (
 )
 
 type IUserUseCase interface {
-	SignUp(ctx context.Context, user entities.User) (entities.UserExtend, error)
-	Login(ctx context.Context, username string, password string) (entities.UserExtend, error)
+	SignUp(ctx context.Context, username, password string) (entities.UserExtend, error)
+	Login(ctx context.Context, username, password string) (entities.UserExtend, error)
 }
 
 type IPostUseCase interface {

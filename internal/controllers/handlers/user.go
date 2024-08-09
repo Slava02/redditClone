@@ -16,17 +16,21 @@ func (h *Handler) initUserRoutes(api *gin.RouterGroup) {
 	api.POST("/login", h.Login)
 }
 
+type SignUpInput struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 func (h *Handler) SignUp(c *gin.Context) {
 	const op = "controllers.handlers.user.signup: "
 
-	// TODO: implemet DTO
-	inp := entities.User{}
+	inp := SignUpInput{}
 	if err := c.ShouldBindBodyWithJSON(&inp); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, Error(ValidationError(err.(validator.ValidationErrors))))
 		return
 	}
 
-	user, err := h.Usecases.Users.SignUp(c, inp)
+	user, err := h.Usecases.Users.SignUp(c, inp.Username, inp.Password)
 	if err != nil {
 		switch {
 		case errors.Is(err, repository.ErrExists):

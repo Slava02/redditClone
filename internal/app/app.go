@@ -30,13 +30,12 @@ func Run(cfg Config) {
 	services := service.NewServices(repos)
 
 	//  INIT DEPENDENCIES
-	// TODO: add hasher to deps
 	hasher := hash.NewSHA1Hasher(cfg.SignerConfig.SigningKey)
-	_ = hasher
 
 	//  INIT USECASES
 	usecases := usecase.NewUseCase(&usecase.Deps{
-		Services: services,
+		Services:       services,
+		PasswordHasher: hasher,
 	})
 
 	//  INIT CONTROLLERS
@@ -48,7 +47,7 @@ func Run(cfg Config) {
 		return cfg.SignerConfig.SigningKey, nil
 	})
 
-	//  TODO: is it actually worth to shutdown the whole app?
+	//  TODO: figure out is it actually worth to shutdown the whole app
 	validator, err := handlers.NewValidator()
 	if err != nil {
 		logrus.Fatalf("could't init validator")
