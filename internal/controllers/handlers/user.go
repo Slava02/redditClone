@@ -39,7 +39,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, Error(repository.ErrExists.Error()))
 			return
 		case errors.Is(err, usecase.IdGenerateError):
-			logger.Infof(op, "couldn't generate id: ", err.Error())
+			logger.Infof(op+"couldn't generate id: ", err.Error())
 
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
