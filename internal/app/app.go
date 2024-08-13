@@ -44,7 +44,7 @@ func Run(cfg Config) {
 		if !ok || method.Alg() != "HS256" {
 			return nil, fmt.Errorf("bad sign method")
 		}
-		return cfg.SignerConfig.SigningKey, nil
+		return []byte(cfg.SignerConfig.SigningKey), nil
 	})
 
 	//  TODO: figure out is it actually worth to shutdown the whole app

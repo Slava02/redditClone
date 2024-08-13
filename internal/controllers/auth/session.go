@@ -1,11 +1,8 @@
 package auth
 
-import "context"
-
-type sessionKey string
-
 const (
-	SessKey sessionKey = "session"
+	SessKey string = "session"
+	AuthKey string = "Authorization"
 )
 
 type Session struct {
@@ -15,8 +12,4 @@ type Session struct {
 
 type SessionID struct {
 	AccessToken string
-}
-
-func ContextWithSession(ctx context.Context, session Session) context.Context {
-	return context.WithValue(ctx, SessKey, session)
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"redditClone/internal/domain/entities"
 	"time"
 
@@ -60,11 +61,11 @@ func (a *AuthManager) CreateToken(user entities.UserExtend) (string, error) {
 }
 
 func (a *AuthManager) ParseToken(accessToken string) (*Session, error) {
-
 	claims := tokenClaims{}
+
 	token, err := jwt.ParseWithClaims(accessToken, &claims, a.keyFunc)
 	if err != nil {
-		return &Session{}, err
+		return &Session{}, fmt.Errorf("couldn't parse token with claims: %w", err)
 	}
 
 	if !token.Valid {
@@ -120,4 +121,15 @@ func (a *AuthManager) DeleteSession(sid SessionID) error {
 	//}
 
 	return nil
+}
+
+func (a *AuthManager) CreateCookie(token string) http.Cookie {
+	cookie := http.Cookie{
+		Name:   AuthKey,
+		Value:  token,
+		Path:   "/",
+		MaxAge: int(a.accessTokenTTL / time.Second),
+	}
+
+	return cookie
 }

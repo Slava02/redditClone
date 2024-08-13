@@ -23,8 +23,8 @@ type PostExtend struct {
 	ID   string `json:"id" bson:"id"`
 }
 
-func NewPostExtend(post Post, id string) *PostExtend {
-	return &PostExtend{
+func NewPostExtend(post Post, id string) PostExtend {
+	return PostExtend{
 		Post: post,
 		ID:   id,
 	}

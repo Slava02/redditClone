@@ -19,7 +19,16 @@ func NewPostService(repo interfaces.IPostRepository) *PostService {
 }
 
 func (p PostService) AddPost(ctx context.Context, post entities.PostExtend) error {
-	panic("implement me")
+	const op = "internal.service.AddPost: "
+
+	err := p.repo.Add(ctx, post)
+	if err != nil {
+		logger.Errorf(op, err.Error())
+
+		return fmt.Errorf("%w", err)
+	}
+
+	return nil
 }
 
 func (p PostService) GetPost(ctx context.Context, postID string) (entities.PostExtend, error) {
@@ -62,8 +71,16 @@ func (p PostService) GetPostsWithCategory(ctx context.Context, category string) 
 }
 
 func (p PostService) GetPostsWithUser(ctx context.Context, username string) ([]entities.PostExtend, error) {
+	const op = "internal.service.GetPostsWithUser: "
 
-	panic("implement me")
+	posts, err := p.repo.GetWhereUsername(ctx, username)
+	if err != nil {
+		logger.Errorf(op, err.Error())
+
+		return []entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	return posts, nil
 }
 
 func (p PostService) UpvotePost(ctx context.Context, userID string, postID string) (entities.PostExtend, error) {
@@ -82,8 +99,25 @@ func (p PostService) UnvotePost(ctx context.Context, userID string, postID strin
 }
 
 func (p PostService) DeletePost(ctx context.Context, username string, postID string) error {
+	const op = "internal.service.DeletePost: "
 
-	panic("implement me")
+	post, err := p.repo.Get(ctx, postID)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	if post.Author.Username != username {
+		return fmt.Errorf("%w", ErrNotAllowed)
+	}
+
+	err = p.repo.Delete(ctx, postID)
+	if err != nil {
+		logger.Errorf(op, err.Error())
+
+		return fmt.Errorf("%w", err)
+	}
+
+	return nil
 }
 
 func (p PostService) SortPostsByTime(posts []entities.PostExtend) []entities.PostExtend {

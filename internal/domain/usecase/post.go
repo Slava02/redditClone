@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"redditClone/internal/domain/entities"
 	"redditClone/internal/interfaces"
+	"redditClone/pkg/hexid"
+	"redditClone/pkg/logger"
 )
 
 type PostUseCase struct {
@@ -31,8 +33,24 @@ func (p PostUseCase) GetPosts(ctx context.Context) ([]entities.PostExtend, error
 }
 
 func (p PostUseCase) AddPost(ctx context.Context, post entities.Post) (entities.PostExtend, error) {
+	const op = "internal.usecase.AddPost"
 
-	panic("implement me")
+	id, err := hexid.Generate()
+	if err != nil {
+		logger.Error(op + "couldn't generate id")
+
+		return entities.PostExtend{}, fmt.Errorf("%w", IdGenerateError)
+	}
+
+	postExtend := entities.NewPostExtend(post, id)
+
+	err = p.service.AddPost(ctx, postExtend)
+
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	return postExtend, nil
 }
 
 func (p PostUseCase) GetPostsWithCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
@@ -47,8 +65,14 @@ func (p PostUseCase) GetPostsWithCategory(ctx context.Context, category string) 
 }
 
 func (p PostUseCase) GetPostsWithUser(ctx context.Context, username string) ([]entities.PostExtend, error) {
+	const op = "internal.usecase.GetPostsWithUser"
 
-	panic("implement me")
+	posts, err := p.service.GetPostsWithUser(ctx, username)
+	if err != nil {
+		return []entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return posts, nil
 }
 
 func (p PostUseCase) GetPost(ctx context.Context, postID string) (entities.PostExtend, error) {
@@ -63,8 +87,14 @@ func (p PostUseCase) GetPost(ctx context.Context, postID string) (entities.PostE
 }
 
 func (p PostUseCase) DeletePost(ctx context.Context, username string, postID string) error {
+	const op = "internal.usecase.DeletePost"
 
-	panic("implement me")
+	err := p.service.DeletePost(ctx, username, postID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }
 
 func (p PostUseCase) Upvote(ctx context.Context, userID string, postID string) (entities.PostExtend, error) {

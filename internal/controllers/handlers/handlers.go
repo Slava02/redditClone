@@ -3,7 +3,6 @@ package handlers
 import (
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"redditClone/internal/domain/usecase"
 	"redditClone/internal/interfaces"
 )
@@ -11,10 +10,10 @@ import (
 type Handler struct {
 	Usecases       *usecase.Usecase
 	AuthManager    interfaces.IAuthManager
-	InputValidator *validator.Validate
+	InputValidator *Validator
 }
 
-func NewHandler(usecases *usecase.Usecase, authManager interfaces.IAuthManager, InputValidator *validator.Validate) *Handler {
+func NewHandler(usecases *usecase.Usecase, authManager interfaces.IAuthManager, InputValidator *Validator) *Handler {
 	return &Handler{
 		Usecases:       usecases,
 		AuthManager:    authManager,

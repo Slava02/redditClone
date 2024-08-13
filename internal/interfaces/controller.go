@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"redditClone/internal/controllers/auth"
 	"redditClone/internal/domain/entities"
 )
@@ -31,4 +32,5 @@ type IAuthManager interface {
 	CreateSession(user entities.UserExtend) (string, error)
 	GetSession(session auth.Session) error
 	DeleteSession(sid auth.SessionID) error
+	CreateCookie(token string) http.Cookie
 }

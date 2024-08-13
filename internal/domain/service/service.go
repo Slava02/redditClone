@@ -1,8 +1,13 @@
 package service
 
 import (
+	"errors"
 	"redditClone/internal/interfaces"
 	"redditClone/internal/repository"
+)
+
+var (
+	ErrNotAllowed = errors.New("action is not allowed")
 )
 
 type Services struct {
