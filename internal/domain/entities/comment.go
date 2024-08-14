@@ -4,9 +4,9 @@ import "time"
 
 // pure business logic
 type Comment struct {
-	Author  Author    `json:"author" bson:"author"`
-	Body    string    `json:"body" bson:"body"`
-	Created time.Time `json:"created" bson:"created"`
+	Author  Author    `json:"author"`
+	Body    string    `json:"body"`
+	Created time.Time `json:"created"`
 }
 
 // business logic with implementation logic
@@ -15,8 +15,8 @@ type CommentExtend struct {
 	ID string `json:"id"`
 }
 
-func NewCommentExtend(comment Comment, id string) *CommentExtend {
-	return &CommentExtend{
+func NewCommentExtend(comment Comment, id string) CommentExtend {
+	return CommentExtend{
 		Comment: comment,
 		ID:      id,
 	}

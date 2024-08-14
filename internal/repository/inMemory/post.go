@@ -157,16 +157,64 @@ func (p *Posts) Delete(ctx context.Context, postID string) error {
 }
 
 func (p *Posts) AddComment(ctx context.Context, postID string, comment entities.CommentExtend) (entities.PostExtend, error) {
+	const op = "repo.post.AddComment: "
 
-	panic("implement me")
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	for _, v := range p.data {
+		if v.ID == postID {
+			v.Comments = append(v.Comments, &comment)
+
+			return v, nil
+		}
+	}
+
+	logger.Info(op + fmt.Sprintf("POST NOT FOUND (postID: %s)", postID))
+
+	return entities.PostExtend{}, fmt.Errorf("%w", repository.ErrNotFound)
 }
 
 func (p *Posts) GetComment(ctx context.Context, postID string, commentID string) (entities.CommentExtend, error) {
+	const op = "repo.post.GetComment: "
 
-	panic("implement me")
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	for _, v := range p.data {
+		if v.ID == postID {
+			for _, c := range v.Comments {
+				if c.ID == commentID {
+					return *c, nil
+				}
+			}
+		}
+	}
+
+	logger.Info(op, fmt.Sprintf("POST NOT FOUND (postID: %s)", postID))
+
+	return entities.CommentExtend{}, fmt.Errorf("%w", repository.ErrNotFound)
 }
 
 func (p *Posts) DeleteComment(ctx context.Context, postID string, commentID string) (entities.PostExtend, error) {
+	const op = "repo.post.DeleteComment: "
 
-	panic("implement me")
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	for _, v := range p.data {
+		if v.ID == postID {
+			for i, c := range v.Comments {
+				if c.ID == commentID {
+					v.Comments = append(v.Comments[:i], v.Comments[:i+1]...)
+
+					return v, nil
+				}
+			}
+		}
+	}
+
+	logger.Info(op + fmt.Sprintf("POST NOT FOUND (postID: %s)", postID))
+
+	return entities.PostExtend{}, fmt.Errorf("%w", repository.ErrNotFound)
 }

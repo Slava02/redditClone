@@ -12,8 +12,10 @@ import (
 )
 
 func (h *Handler) initUserRoutes(api *gin.RouterGroup) {
-	api.POST("/register", h.SignUp)
-	api.POST("/login", h.Login)
+	api.POST("/register",
+		h.SignUp)
+	api.POST("/login",
+		h.Login)
 }
 
 type SignUpInput struct {

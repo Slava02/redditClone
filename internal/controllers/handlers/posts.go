@@ -9,11 +9,12 @@ import (
 	"redditClone/internal/controllers/middleware"
 	"redditClone/internal/domain/entities"
 	"redditClone/internal/domain/service"
+	"redditClone/internal/domain/usecase"
 	"redditClone/internal/repository"
 	"redditClone/pkg/logger"
+	"time"
 )
 
-// TODO вынести неидемпотентные пути в отдельную группу и добавить мидлваре для них
 func (h *Handler) initPostRoutes(api *gin.RouterGroup) {
 	posts := api.Group("/posts")
 	{
@@ -31,14 +32,35 @@ func (h *Handler) initPostRoutes(api *gin.RouterGroup) {
 	{
 		post.GET("/:id",
 			h.GetPost)
-		post.DELETE("/:id",
+		post.POST("/:id",
+			middleware.CallTime(),
+			middleware.Auth(h.AuthManager),
+			h.AddComment)
+		post.DELETE("/:postID/:commentID",
+			middleware.Auth(h.AuthManager),
+			h.DeleteComment)
+		post.DELETE("/:postID",
 			middleware.Auth(h.AuthManager),
 			h.DeletePost)
 	}
 
 	userPosts := api.Group("/user")
 	{
-		userPosts.GET("/:username", h.GetPostsWithUser)
+		userPosts.GET("/:username",
+			h.GetPostsWithUser)
+	}
+}
+
+func (h *Handler) DeleteHandler(c *gin.Context) {
+	path1 := c.Param("postID")
+	path2 := c.Param("commentID")
+
+	if path1 != "" && path2 == "" {
+		h.DeletePost(c)
+	} else if path2 != "" {
+		h.DeleteComment(c)
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
 	}
 }
 
@@ -108,6 +130,14 @@ func (h *Handler) AddPost(c *gin.Context) {
 		return
 	}
 
+	created, ok := c.MustGet(middleware.CallTimeKey).(time.Time)
+	if !ok {
+		logger.Errorf(op + "couldn't get callTime: ")
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
 	post := entities.Post{
 		Category: inp.Category,
 		Text:     inp.Text,
@@ -115,7 +145,7 @@ func (h *Handler) AddPost(c *gin.Context) {
 		Type:     inp.PostType,
 		URL:      inp.URL,
 		Views:    1,
-		Created:  c.MustGet(middleware.CallTimeKey).(string),
+		Created:  created.String(),
 		Author: entities.Author{
 			Username: session.Username,
 			ID:       session.ID,
@@ -231,7 +261,7 @@ func (h *Handler) GetPost(c *gin.Context) {
 func (h *Handler) DeletePost(c *gin.Context) {
 	const op = "controllers.posts.DeletePost: "
 
-	id := c.Param("id")
+	id := c.Param("postID")
 	if err := h.InputValidator.Var(id, "alphanum"); err != nil {
 		if verr, ok := err.(validator.ValidationErrors); ok {
 			logger.Infof(op+"validate id", Error(ValidationError(verr)))
@@ -277,14 +307,138 @@ func (h *Handler) DeletePost(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusOK, OK())
 }
 
-func (h *Handler) AddComment(c *gin.Context) {
+type AddCommentInput struct {
+	Comment string `json:"comment"`
+}
 
-	panic("implement me")
+// TODO: сейчас у меня может храниться только один коммент, так как при создании постов не выделяю для ни память
+func (h *Handler) AddComment(c *gin.Context) {
+	const op = "controllers.posts.AddComment: "
+
+	id := c.Param("id")
+	if err := h.InputValidator.Var(id, "alphanum"); err != nil {
+		if verr, ok := err.(validator.ValidationErrors); ok {
+			logger.Infof(op+"validate id", Error(ValidationError(verr)))
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("invalid post id"))
+		} else {
+			logger.Errorf(op+"validate id: ", err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	var inp AddCommentInput
+
+	err := c.BindJSON(&inp)
+	if err != nil {
+		logger.Errorf(op+"couldn't bind json", err.Error())
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	session, ok := c.Keys[auth.SessKey].(*auth.Session)
+	if !ok {
+		logger.Infof(op + "couldn't get session from context")
+
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	created, ok := c.MustGet(middleware.CallTimeKey).(time.Time)
+	if !ok {
+		logger.Errorf(op + "couldn't get callTime: ")
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	comment := entities.Comment{
+		Body: inp.Comment,
+		Author: entities.Author{
+			Username: session.Username,
+			ID:       session.ID,
+		},
+		Created: created,
+	}
+
+	postExtend, err := h.Usecases.Comments.AddComment(c, id, comment)
+	if err != nil {
+		switch {
+		case errors.Is(err, usecase.IdGenerateError):
+			logger.Infof(op, err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		case errors.Is(err, repository.ErrNotFound):
+			logger.Infof(op, err.Error())
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("post not found"))
+		default:
+			logger.Errorf(op, err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	c.JSON(http.StatusCreated, postExtend)
 }
 
 func (h *Handler) DeleteComment(c *gin.Context) {
+	const op = "controllers.posts.DeleteComment: "
 
-	panic("implement me")
+	postID, commentID := c.Param("postID"), c.Param("commentID")
+	if errPost, errComment := h.InputValidator.Var(postID, "alphanum"), h.InputValidator.Var(commentID, "alphanum"); errPost != nil || errComment != nil {
+		if verrPost, ok := errPost.(validator.ValidationErrors); ok {
+			logger.Infof(op+"validate id", Error(ValidationError(verrPost)))
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("invalid post id"))
+		} else if verrComment, ok := errComment.(validator.ValidationErrors); ok {
+			logger.Infof(op+"validate id", Error(ValidationError(verrComment)))
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("invalid post id"))
+		} else {
+			logger.Errorf(op + "validate id error")
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	session, ok := c.Keys[auth.SessKey].(*auth.Session)
+	if !ok {
+		logger.Infof(op + "couldn't get session from context")
+
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	post, err := h.Usecases.Comments.DeleteComment(c, session.Username, postID, commentID)
+	if err != nil {
+		switch {
+		case errors.Is(service.ErrNotAllowed, err):
+			logger.Infof(op+"user is not allowed to delete post", err.Error())
+
+			c.AbortWithStatus(http.StatusMethodNotAllowed)
+		case errors.Is(err, repository.ErrNotFound):
+			logger.Infof(op, err.Error())
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("post not found"))
+		default:
+			logger.Errorf(op, err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	c.AbortWithStatusJSON(http.StatusOK, post)
 }
 
 func (h *Handler) Upvote(c *gin.Context) {
@@ -301,3 +455,5 @@ func (h *Handler) Unvote(c *gin.Context) {
 
 	panic("implement me")
 }
+
+// TODO: нужно отдельно сделать, чтобы посты сортировались

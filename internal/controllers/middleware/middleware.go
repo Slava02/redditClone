@@ -13,7 +13,7 @@ const (
 func CallTime() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		t := time.Now()
-		c.Set(CallTimeKey, t.String())
+		c.Set(CallTimeKey, t)
 		c.Next()
 	}
 }
