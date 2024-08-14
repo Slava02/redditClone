@@ -17,15 +17,23 @@ import (
 func (h *Handler) initPostRoutes(api *gin.RouterGroup) {
 	posts := api.Group("/posts")
 	{
-		posts.GET("/", h.GetPosts)
-		posts.GET("/:category", h.GetPostsWithCategory)
-		posts.POST("/", middleware.CallTime(), h.AddPost)
+		posts.GET("/",
+			h.GetPosts)
+		posts.GET("/:category",
+			h.GetPostsWithCategory)
+		posts.POST("/",
+			middleware.CallTime(),
+			middleware.Auth(h.AuthManager),
+			h.AddPost)
 	}
 
 	post := api.Group("/post")
 	{
-		post.GET("/:id", h.GetPost)
-		post.DELETE("/:id", h.DeletePost)
+		post.GET("/:id",
+			h.GetPost)
+		post.DELETE("/:id",
+			middleware.Auth(h.AuthManager),
+			h.DeletePost)
 	}
 
 	userPosts := api.Group("/user")
@@ -92,19 +100,11 @@ func (h *Handler) AddPost(c *gin.Context) {
 	}
 
 	// Get session from request
-	token, err := c.Cookie(auth.AuthKey)
-	if err != nil {
-		logger.Errorf(op+"cookie doesn't exists", err.Error())
+	session, ok := c.Keys[auth.SessKey].(*auth.Session)
+	if !ok {
+		logger.Infof(op + "couldn't get session from context")
 
 		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
-
-	session, err := h.AuthManager.ParseToken(token)
-	if err != nil {
-		logger.Errorf(op+"couldn't parse session from token", err.Error())
-
-		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -246,23 +246,15 @@ func (h *Handler) DeletePost(c *gin.Context) {
 		return
 	}
 
-	token, err := c.Cookie(auth.AuthKey)
-	if err != nil {
-		logger.Errorf(op+"cookie doesn't exists", err.Error())
+	session, ok := c.Keys[auth.SessKey].(*auth.Session)
+	if !ok {
+		logger.Infof(op + "couldn't get session from context")
 
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	session, err := h.AuthManager.ParseToken(token)
-	if err != nil {
-		logger.Errorf(op+"couldn't parse session from token", err.Error())
-
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	err = h.Usecases.Posts.DeletePost(c, session.Username, id)
+	err := h.Usecases.Posts.DeletePost(c, session.Username, id)
 	if err != nil {
 		switch {
 		case errors.Is(service.ErrNotAllowed, err):

@@ -59,10 +59,6 @@ func (h *Handler) SignUp(c *gin.Context) {
 		return
 	}
 
-	cookie := h.AuthManager.CreateCookie(token)
-
-	c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, false, true)
-
 	c.JSON(http.StatusOK, authResp{Token: token})
 }
 
@@ -99,10 +95,6 @@ func (h *Handler) Login(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-
-	cookie := h.AuthManager.CreateCookie(token)
-
-	c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, false, true)
 
 	c.JSON(http.StatusOK, authOK(token))
 }
