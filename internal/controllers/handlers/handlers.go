@@ -54,13 +54,19 @@ func (h *Handler) initStatic(router *gin.Engine) {
 	}
 }
 
-type ErrResp struct {
+type Resp struct {
 	Message string `json:"message"`
 }
 
-func Error(msg string) ErrResp {
-	return ErrResp{
+func Error(msg string) Resp {
+	return Resp{
 		Message: msg,
+	}
+}
+
+func OK() Resp {
+	return Resp{
+		Message: "success",
 	}
 }
 

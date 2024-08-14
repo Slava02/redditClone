@@ -8,6 +8,7 @@ import (
 	"redditClone/internal/controllers/auth"
 	"redditClone/internal/controllers/middleware"
 	"redditClone/internal/domain/entities"
+	"redditClone/internal/domain/service"
 	"redditClone/internal/repository"
 	"redditClone/pkg/logger"
 )
@@ -250,6 +251,7 @@ func (h *Handler) DeletePost(c *gin.Context) {
 		logger.Errorf(op+"cookie doesn't exists", err.Error())
 
 		c.AbortWithStatus(http.StatusUnauthorized)
+		return
 	}
 
 	session, err := h.AuthManager.ParseToken(token)
@@ -257,12 +259,20 @@ func (h *Handler) DeletePost(c *gin.Context) {
 		logger.Errorf(op+"couldn't parse session from token", err.Error())
 
 		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
 
 	err = h.Usecases.Posts.DeletePost(c, session.Username, id)
-	// TODO: handle all errors
 	if err != nil {
 		switch {
+		case errors.Is(service.ErrNotAllowed, err):
+			logger.Infof(op+"user is not allowed to delete post", err.Error())
+
+			c.AbortWithStatus(http.StatusMethodNotAllowed)
+		case errors.Is(err, repository.ErrNotFound):
+			logger.Infof(op, err.Error())
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("post not found"))
 		default:
 			logger.Errorf(op, err.Error())
 
@@ -272,7 +282,7 @@ func (h *Handler) DeletePost(c *gin.Context) {
 		return
 	}
 
-	c.AbortWithStatus(http.StatusOK)
+	c.AbortWithStatusJSON(http.StatusOK, OK())
 }
 
 func (h *Handler) AddComment(c *gin.Context) {
