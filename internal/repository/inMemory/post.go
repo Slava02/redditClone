@@ -8,6 +8,7 @@ import (
 	"redditClone/internal/repository"
 	"redditClone/pkg/logger"
 	"sync"
+	"time"
 )
 
 // реализуем интерфейс storage
@@ -21,44 +22,44 @@ type Posts struct {
 var _ interfaces.IPostRepository = &Posts{}
 
 func NewPosts() *Posts {
-	//initPosts := []entities.PostExtend{
-	//	{
-	//		ID: "656b54d31d06de00132f7ddc",
-	//		Post: entities.Post{
-	//			Category: "music",
-	//			Text:     "text",
-	//			Title:    "TEST",
-	//			Type:     "text",
-	//
-	//			URL:     "-",
-	//			Views:   324,
-	//			Created: "023-12-02T16:01:23.248Z",
-	//			Author:  entities.Author{Username: "CHAPA", ID: "228"},
-	//
-	//			Score:            22,
-	//			UpvotePercentage: 78,
-	//			Votes:            []*entities.Vote{{UserID: "bibp", Vote: 1}, {UserID: "boba", Vote: -1}},
-	//
-	//			Comments: []*entities.CommentExtend{
-	//				{
-	//					ID: "1",
-	//					Comment: entities.Comment{
-	//						Author: entities.Author{
-	//							Username: "CHAPA",
-	//							ID:       "228",
-	//						},
-	//						Body:    "lksdjf",
-	//						Created: time.Now(),
-	//					},
-	//				},
-	//			},
-	//		},
-	//	},
-	//}
-	data := make([]entities.PostExtend, 0)
+	initPosts := []entities.PostExtend{
+		{
+			ID: "656b54d31d06de00132f7ddc",
+			Post: entities.Post{
+				Category: "music",
+				Text:     "text",
+				Title:    "TEST",
+				Type:     "text",
+
+				URL:     "-",
+				Views:   324,
+				Created: "023-12-02T16:01:23.248Z",
+				Author:  entities.Author{Username: "CHAPA", ID: "228"},
+
+				Score:            22,
+				UpvotePercentage: 78,
+				Votes:            []entities.Vote{{UserID: "bibp", Vote: 1}, {UserID: "boba", Vote: -1}},
+
+				Comments: []entities.CommentExtend{
+					{
+						ID: "1",
+						Comment: entities.Comment{
+							Author: entities.Author{
+								Username: "CHAPA",
+								ID:       "228",
+							},
+							Body:    "lksdjf",
+							Created: time.Now(),
+						},
+					},
+				},
+			},
+		},
+	}
+
 	return &Posts{
 		lastID: 1,
-		data:   data,
+		data:   initPosts,
 	}
 }
 
@@ -133,8 +134,21 @@ func (p *Posts) GetAll(ctx context.Context) ([]entities.PostExtend, error) {
 }
 
 func (p *Posts) Update(ctx context.Context, postID string, newPost entities.PostExtend) error {
+	const op = "repo.post.Update: "
 
-	panic("implement me")
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	for i, v := range p.data {
+		if v.ID == postID {
+			p.data[i] = newPost
+			return nil
+		}
+	}
+
+	logger.Info(op + fmt.Sprintf("POST NOT FOUND (postID: %s)", postID))
+
+	return fmt.Errorf("%w", repository.ErrNotFound)
 }
 
 func (p *Posts) Delete(ctx context.Context, postID string) error {
@@ -164,7 +178,7 @@ func (p *Posts) AddComment(ctx context.Context, postID string, comment entities.
 
 	for _, v := range p.data {
 		if v.ID == postID {
-			v.Comments = append(v.Comments, &comment)
+			v.Comments = append(v.Comments, comment)
 
 			return v, nil
 		}
@@ -185,7 +199,7 @@ func (p *Posts) GetComment(ctx context.Context, postID string, commentID string)
 		if v.ID == postID {
 			for _, c := range v.Comments {
 				if c.ID == commentID {
-					return *c, nil
+					return c, nil
 				}
 			}
 		}

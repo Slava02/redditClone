@@ -84,18 +84,66 @@ func (p PostService) GetPostsWithUser(ctx context.Context, username string) ([]e
 }
 
 func (p PostService) UpvotePost(ctx context.Context, userID string, postID string) (entities.PostExtend, error) {
+	const op = "internal.service.UpvotePost: "
 
-	panic("implement me")
+	post, err := p.repo.Get(ctx, postID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	err = post.Upvote(userID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	err = p.repo.Update(ctx, postID, post)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	return post, nil
 }
 
 func (p PostService) DownvotePost(ctx context.Context, userID string, postID string) (entities.PostExtend, error) {
+	const op = "internal.service.DownvotePost: "
 
-	panic("implement me")
+	post, err := p.repo.Get(ctx, postID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	err = post.Downvote(userID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	err = p.repo.Update(ctx, postID, post)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	return post, nil
 }
 
 func (p PostService) UnvotePost(ctx context.Context, userID string, postID string) (entities.PostExtend, error) {
+	const op = "internal.service.UnvotePost: "
 
-	panic("implement me")
+	post, err := p.repo.Get(ctx, postID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	err = post.Unvote(userID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	err = p.repo.Update(ctx, postID, post)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%w", err)
+	}
+
+	return post, nil
 }
 
 func (p PostService) DeletePost(ctx context.Context, username string, postID string) error {

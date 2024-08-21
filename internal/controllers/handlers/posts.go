@@ -30,8 +30,11 @@ func (h *Handler) initPostRoutes(api *gin.RouterGroup) {
 
 	post := api.Group("/post")
 	{
-		post.GET("/:id",
-			h.GetPost)
+		post.GET("/:postID",
+			h.GetPostHandler)
+		post.GET("/:postID/:action",
+			middleware.Auth(h.AuthManager),
+			h.GetPostHandler)
 		post.POST("/:id",
 			middleware.CallTime(),
 			middleware.Auth(h.AuthManager),
@@ -51,7 +54,32 @@ func (h *Handler) initPostRoutes(api *gin.RouterGroup) {
 	}
 }
 
-func (h *Handler) DeleteHandler(c *gin.Context) {
+func (h *Handler) GetPostHandler(c *gin.Context) {
+	postID := c.Param("postID")
+	action := c.Param("action")
+
+	if postID != "" && action == "" {
+		h.GetPost(c)
+	} else if action != "" {
+		switch action {
+		case "upvote":
+			h.Upvote(c)
+			return
+		case "downvote":
+			h.Downvote(c)
+			return
+		case "unvote":
+			h.Unvote(c)
+			return
+		default:
+			c.AbortWithStatus(http.StatusNotFound)
+		}
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
+}
+
+func (h *Handler) DeletePostHandler(c *gin.Context) {
 	path1 := c.Param("postID")
 	path2 := c.Param("commentID")
 
@@ -138,21 +166,8 @@ func (h *Handler) AddPost(c *gin.Context) {
 		return
 	}
 
-	post := entities.Post{
-		Category: inp.Category,
-		Text:     inp.Text,
-		Title:    inp.Title,
-		Type:     inp.PostType,
-		URL:      inp.URL,
-		Views:    1,
-		Created:  created.String(),
-		Author: entities.Author{
-			Username: session.Username,
-			ID:       session.ID,
-		},
-		Votes:    []*entities.Vote{},
-		Comments: []*entities.CommentExtend{},
-	}
+	author := entities.NewAuthor(session.ID, session.Username)
+	post := entities.NewPost(inp.Category, inp.Text, inp.Title, inp.PostType, inp.URL, created.String(), author)
 
 	postExtend, err := h.Usecases.Posts.AddPost(c, post)
 
@@ -226,7 +241,7 @@ func (h *Handler) GetPostsWithUser(c *gin.Context) {
 func (h *Handler) GetPost(c *gin.Context) {
 	const op = "controllers.posts.GetPost: "
 
-	id := c.Param("id")
+	id := c.Param("postID")
 	if err := h.InputValidator.Var(id, "alphanum"); err != nil {
 		if verr, ok := err.(validator.ValidationErrors); ok {
 			logger.Infof(op+"validate id", Error(ValidationError(verr)))
@@ -442,18 +457,153 @@ func (h *Handler) DeleteComment(c *gin.Context) {
 }
 
 func (h *Handler) Upvote(c *gin.Context) {
+	const op = "controllers.posts.Upvote: "
 
-	panic("implement me")
+	postID := c.Param("postID")
+	if err := h.InputValidator.Var(postID, "alphanum"); err != nil {
+		if verr, ok := err.(validator.ValidationErrors); ok {
+			logger.Infof(op+"validate id", Error(ValidationError(verr)))
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("invalid post id"))
+		} else {
+			logger.Errorf(op+"validate id: ", err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	session, ok := c.Keys[auth.SessKey].(*auth.Session)
+	if !ok {
+		logger.Infof(op + "couldn't get session from context")
+
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	post, err := h.Usecases.Posts.Upvote(c, session.ID, postID)
+	if err != nil {
+		switch {
+		case errors.Is(err, entities.ErrAlreadyUpvote):
+			logger.Infof(op + err.Error())
+			c.AbortWithStatus(http.StatusAlreadyReported)
+		case errors.Is(err, repository.ErrNotFound):
+
+			logger.Infof(op + err.Error())
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("post not found"))
+		default:
+
+			logger.Errorf(op + err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	c.AbortWithStatusJSON(http.StatusOK, post)
 }
 
 func (h *Handler) Downvote(c *gin.Context) {
+	const op = "controllers.posts.Downvote: "
 
-	panic("implement me")
+	postID := c.Param("postID")
+	if err := h.InputValidator.Var(postID, "alphanum"); err != nil {
+		if verr, ok := err.(validator.ValidationErrors); ok {
+			logger.Infof(op+"validate id", Error(ValidationError(verr)))
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("invalid post id"))
+		} else {
+			logger.Errorf(op+"validate id: ", err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	session, ok := c.Keys[auth.SessKey].(*auth.Session)
+	if !ok {
+		logger.Infof(op + "couldn't get session from context")
+
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	post, err := h.Usecases.Posts.Downvote(c, session.ID, postID)
+	if err != nil {
+		switch {
+		case errors.Is(err, entities.ErrAlreadyDownvote):
+			logger.Infof(op + err.Error())
+			c.AbortWithStatus(http.StatusAlreadyReported)
+		case errors.Is(err, repository.ErrNotFound):
+
+			logger.Infof(op + err.Error())
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("post not found"))
+		default:
+
+			logger.Errorf(op + err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	c.AbortWithStatusJSON(http.StatusOK, post)
 }
 
 func (h *Handler) Unvote(c *gin.Context) {
+	const op = "controllers.posts.Unvote: "
 
-	panic("implement me")
+	postID := c.Param("postID")
+	if err := h.InputValidator.Var(postID, "alphanum"); err != nil {
+		if verr, ok := err.(validator.ValidationErrors); ok {
+			logger.Infof(op+"validate id", Error(ValidationError(verr)))
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("invalid post id"))
+		} else {
+			logger.Errorf(op+"validate id: ", err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	session, ok := c.Keys[auth.SessKey].(*auth.Session)
+	if !ok {
+		logger.Infof(op + "couldn't get session from context")
+
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	post, err := h.Usecases.Posts.Unvote(c, session.ID, postID)
+	if err != nil {
+		switch {
+		case errors.Is(err, entities.ErrAlreadyUnvote):
+			logger.Infof(op + err.Error())
+			c.AbortWithStatus(http.StatusAlreadyReported)
+		case errors.Is(err, repository.ErrNotFound):
+
+			logger.Infof(op + err.Error())
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, Error("post not found"))
+		default:
+
+			logger.Errorf(op + err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	c.AbortWithStatusJSON(http.StatusOK, post)
 }
 
 // TODO: нужно отдельно сделать, чтобы посты сортировались

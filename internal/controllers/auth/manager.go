@@ -19,6 +19,7 @@ const (
 var (
 	ErrInactiveToken    = errors.New("inactive token")
 	ErrSessionUnmarshal = errors.New("session unmarshal failed")
+	ErrInvalidToken     = errors.New("invalid token")
 )
 
 type AuthManager struct {
@@ -65,11 +66,14 @@ func (a *AuthManager) ParseToken(accessToken string) (*Session, error) {
 
 	token, err := jwt.ParseWithClaims(accessToken, &claims, a.keyFunc)
 	if err != nil {
+		if _, verr := err.(*jwt.ValidationError); verr {
+			return &Session{}, fmt.Errorf("%w", ErrInvalidToken)
+		}
 		return &Session{}, fmt.Errorf("couldn't parse token with claims: %w", err)
 	}
 
 	if !token.Valid {
-		return &Session{}, errors.New("invalid token")
+		return &Session{}, fmt.Errorf("%w", ErrInvalidToken)
 	}
 
 	return &claims.Session, nil

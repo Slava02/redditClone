@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"redditClone/internal/controllers/auth"
@@ -18,9 +19,18 @@ func Auth(a interfaces.IAuthManager) gin.HandlerFunc {
 
 			session, err := a.ParseToken(accesToken)
 			if err != nil {
-				logger.Errorf("couldn't parse session from token", err.Error())
+				switch {
+				case errors.Is(err, auth.ErrInvalidToken):
+					logger.Errorf(err.Error())
 
-				c.AbortWithStatus(http.StatusInternalServerError)
+					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+						"message": err.Error(),
+					})
+				default:
+					logger.Errorf("couldn't parse session from token", err.Error())
+
+					c.AbortWithStatus(http.StatusInternalServerError)
+				}
 				return
 			}
 

@@ -22,7 +22,7 @@ func NewPostUseCase(service interfaces.IPostService) *PostUseCase {
 }
 
 func (p PostUseCase) GetPosts(ctx context.Context) ([]entities.PostExtend, error) {
-	const op = "internal.usecase.GetPosts"
+	const op = "internal.usecase.GetPosts: "
 
 	posts, err := p.service.GetPosts(ctx)
 	if err != nil {
@@ -33,7 +33,7 @@ func (p PostUseCase) GetPosts(ctx context.Context) ([]entities.PostExtend, error
 }
 
 func (p PostUseCase) AddPost(ctx context.Context, post entities.Post) (entities.PostExtend, error) {
-	const op = "internal.usecase.AddPost"
+	const op = "internal.usecase.AddPost: "
 
 	id, err := hexid.Generate()
 	if err != nil {
@@ -54,7 +54,7 @@ func (p PostUseCase) AddPost(ctx context.Context, post entities.Post) (entities.
 }
 
 func (p PostUseCase) GetPostsWithCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
-	const op = "internal.usecase.GetPostsWithCategory"
+	const op = "internal.usecase.GetPostsWithCategory: "
 
 	posts, err := p.service.GetPostsWithCategory(ctx, category)
 	if err != nil {
@@ -65,7 +65,7 @@ func (p PostUseCase) GetPostsWithCategory(ctx context.Context, category string) 
 }
 
 func (p PostUseCase) GetPostsWithUser(ctx context.Context, username string) ([]entities.PostExtend, error) {
-	const op = "internal.usecase.GetPostsWithUser"
+	const op = "internal.usecase.GetPostsWithUser: "
 
 	posts, err := p.service.GetPostsWithUser(ctx, username)
 	if err != nil {
@@ -76,7 +76,7 @@ func (p PostUseCase) GetPostsWithUser(ctx context.Context, username string) ([]e
 }
 
 func (p PostUseCase) GetPost(ctx context.Context, postID string) (entities.PostExtend, error) {
-	const op = "internal.usecase.GetPost"
+	const op = "internal.usecase.GetPost: "
 
 	post, err := p.service.GetPost(ctx, postID)
 	if err != nil {
@@ -87,7 +87,7 @@ func (p PostUseCase) GetPost(ctx context.Context, postID string) (entities.PostE
 }
 
 func (p PostUseCase) DeletePost(ctx context.Context, username string, postID string) error {
-	const op = "internal.usecase.DeletePost"
+	const op = "internal.usecase.DeletePost: "
 
 	err := p.service.DeletePost(ctx, username, postID)
 	if err != nil {
@@ -98,16 +98,34 @@ func (p PostUseCase) DeletePost(ctx context.Context, username string, postID str
 }
 
 func (p PostUseCase) Upvote(ctx context.Context, userID string, postID string) (entities.PostExtend, error) {
+	const op = "internal.usecase.Upvote: "
 
-	panic("implement me")
+	post, err := p.service.UpvotePost(ctx, userID, postID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return post, nil
 }
 
 func (p PostUseCase) Downvote(ctx context.Context, userID string, postID string) (entities.PostExtend, error) {
+	const op = "internal.usecase.Downvote: "
 
-	panic("implement me")
+	post, err := p.service.DownvotePost(ctx, userID, postID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return post, nil
 }
 
 func (p PostUseCase) Unvote(ctx context.Context, userID string, postID string) (entities.PostExtend, error) {
+	const op = "internal.usecase.Unvote: "
 
-	panic("implement me")
+	post, err := p.service.UnvotePost(ctx, userID, postID)
+	if err != nil {
+		return entities.PostExtend{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return post, nil
 }
