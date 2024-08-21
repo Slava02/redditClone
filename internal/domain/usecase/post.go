@@ -45,7 +45,6 @@ func (p PostUseCase) AddPost(ctx context.Context, post entities.Post) (entities.
 	postExtend := entities.NewPostExtend(post, id)
 
 	err = p.service.AddPost(ctx, postExtend)
-
 	if err != nil {
 		return entities.PostExtend{}, fmt.Errorf("%w", err)
 	}

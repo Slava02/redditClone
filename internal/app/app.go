@@ -47,7 +47,6 @@ func Run(cfg Config) {
 		return []byte(cfg.SignerConfig.SigningKey), nil
 	})
 
-	//  TODO: figure out is it actually worth to shutdown the whole app
 	validator, err := handlers.NewValidator()
 	if err != nil {
 		logrus.Fatalf("could't init validator")

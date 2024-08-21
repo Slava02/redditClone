@@ -170,10 +170,12 @@ func (h *Handler) AddPost(c *gin.Context) {
 	post := entities.NewPost(inp.Category, inp.Text, inp.Title, inp.PostType, inp.URL, created.Format(time.RFC3339), author)
 
 	postExtend, err := h.Usecases.Posts.AddPost(c, post)
-
-	// TODO: handle all errors
 	if err != nil {
 		switch {
+		case errors.Is(err, usecase.IdGenerateError):
+			logger.Infof(op, err.Error())
+
+			c.AbortWithStatus(http.StatusInternalServerError)
 		default:
 			logger.Errorf(op, err.Error())
 
@@ -326,7 +328,6 @@ type AddCommentInput struct {
 	Comment string `json:"comment"`
 }
 
-// TODO: сейчас у меня может храниться только один коммент, так как при создании постов не выделяю для ни память
 func (h *Handler) AddComment(c *gin.Context) {
 	const op = "controllers.posts.AddComment: "
 
@@ -605,5 +606,3 @@ func (h *Handler) Unvote(c *gin.Context) {
 
 	c.AbortWithStatusJSON(http.StatusOK, post)
 }
-
-// TODO: нужно отдельно сделать, чтобы посты сортировались

@@ -79,35 +79,3 @@ func authOK(token string) authResp {
 		Token: token,
 	}
 }
-
-/*
-type handlerError struct {
-	Location string `json:"location"`
-	Param    string `json:"param"`
-	Value    string `json:"value"`
-	Msg      string `json:"msg"`
-}
-
-func newHandlerError(location, param, value, msg string) handlerError {
-	return handlerError{
-		Location: location,
-		Param:    param,
-		Value:    value,
-		Msg:      msg,
-	}
-}
-
-type handlerErrorsResp struct {
-	Errors []handlerError `json:"errors"`
-}
-
-func newUserErrorsResp() handlerErrorsResp {
-	return handlerErrorsResp{
-		Errors: make([]handlerError, 0),
-	}
-}
-
-func (u handlerErrorsResp) add(err handlerError) {
-	u.Errors = append(u.Errors, err)
-}
-*/

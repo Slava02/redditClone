@@ -2,7 +2,6 @@ package logger
 
 import "github.com/sirupsen/logrus"
 
-// TODO: норм логгирование
 func Debug(msg ...interface{}) {
 	logrus.Debug(msg...)
 }

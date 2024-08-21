@@ -34,7 +34,6 @@ func NewUserUseCase(service interfaces.IUserService, hasher hash.PasswordHasher)
 func (u UserUseCase) SignUp(ctx context.Context, username, password string) (entities.UserExtend, error) {
 	const op = "usecase.user.signup: "
 
-	//  TODO: pass id generator as dependency
 	id, err := hexid.Generate()
 	if err != nil {
 		logger.Error(op + "couldn't generate id")
