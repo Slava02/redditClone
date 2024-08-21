@@ -6,6 +6,7 @@ import (
 	"redditClone/internal/domain/entities"
 	"redditClone/internal/interfaces"
 	"redditClone/pkg/logger"
+	"sort"
 )
 
 type PostService struct {
@@ -41,6 +42,8 @@ func (p PostService) GetPost(ctx context.Context, postID string) (entities.PostE
 		return entities.PostExtend{}, fmt.Errorf("%w", err)
 	}
 
+	post.Post.View()
+
 	return post, nil
 }
 
@@ -54,7 +57,7 @@ func (p PostService) GetPosts(ctx context.Context) ([]entities.PostExtend, error
 		return []entities.PostExtend{}, fmt.Errorf("%w", err)
 	}
 
-	return posts, nil
+	return p.SortPosts(posts), nil
 }
 
 func (p PostService) GetPostsWithCategory(ctx context.Context, category string) ([]entities.PostExtend, error) {
@@ -67,7 +70,7 @@ func (p PostService) GetPostsWithCategory(ctx context.Context, category string) 
 		return []entities.PostExtend{}, fmt.Errorf("%w", err)
 	}
 
-	return posts, nil
+	return p.SortPosts(posts), nil
 }
 
 func (p PostService) GetPostsWithUser(ctx context.Context, username string) ([]entities.PostExtend, error) {
@@ -80,7 +83,7 @@ func (p PostService) GetPostsWithUser(ctx context.Context, username string) ([]e
 		return []entities.PostExtend{}, fmt.Errorf("%w", err)
 	}
 
-	return posts, nil
+	return p.SortPosts(posts), nil
 }
 
 func (p PostService) UpvotePost(ctx context.Context, userID string, postID string) (entities.PostExtend, error) {
@@ -168,7 +171,13 @@ func (p PostService) DeletePost(ctx context.Context, username string, postID str
 	return nil
 }
 
-func (p PostService) SortPostsByTime(posts []entities.PostExtend) []entities.PostExtend {
+func (p PostService) SortPosts(posts []entities.PostExtend) []entities.PostExtend {
+	sort.Slice(posts, func(i, j int) bool {
+		if posts[i].Score != posts[j].Score {
+			return posts[i].Score > posts[j].Score
+		}
+		return posts[i].ID > posts[j].ID // если равный рейтинг, то по айди
+	})
 
-	panic("implement me")
+	return posts
 }

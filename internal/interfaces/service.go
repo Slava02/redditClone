@@ -21,7 +21,7 @@ type IPostService interface {
 	DownvotePost(ctx context.Context, userID string, postID string) (entities.PostExtend, error)
 	UnvotePost(ctx context.Context, userID string, postID string) (entities.PostExtend, error)
 	DeletePost(ctx context.Context, username string, postID string) error
-	SortPostsByTime(posts []entities.PostExtend) []entities.PostExtend
+	SortPosts(posts []entities.PostExtend) []entities.PostExtend
 }
 
 type ICommentService interface {

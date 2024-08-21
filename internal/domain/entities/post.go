@@ -43,9 +43,9 @@ func NewPost(category, text, title, postType, url, created string, author Author
 	}
 }
 
-func (post *Post) View() Post {
+func (post *Post) View() {
 	post.Views++
-	return *post
+	return
 }
 
 func (post *Post) Upvote(userID string) error {

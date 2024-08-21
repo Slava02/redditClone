@@ -167,7 +167,7 @@ func (h *Handler) AddPost(c *gin.Context) {
 	}
 
 	author := entities.NewAuthor(session.ID, session.Username)
-	post := entities.NewPost(inp.Category, inp.Text, inp.Title, inp.PostType, inp.URL, created.String(), author)
+	post := entities.NewPost(inp.Category, inp.Text, inp.Title, inp.PostType, inp.URL, created.Format(time.RFC3339), author)
 
 	postExtend, err := h.Usecases.Posts.AddPost(c, post)
 
