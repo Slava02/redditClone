@@ -19,7 +19,7 @@ type Posts struct {
 	data   []entities.PostExtend
 }
 
-var _ interfaces.IPostRepository = &Posts{}
+var _ interfaces.IPostRepository = (*Posts)(nil)
 
 func NewPosts() *Posts {
 	initPosts := []entities.PostExtend{

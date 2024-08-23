@@ -36,7 +36,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, repository.ErrExists):
-			logger.Infof(op, err.Error())
+			logger.Infof(op+"already exists error", err.Error())
 
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, Error(repository.ErrExists.Error()))
 			return

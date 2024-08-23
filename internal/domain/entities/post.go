@@ -13,19 +13,19 @@ var (
 
 // pure business logic
 type Post struct {
-	Category         string          `json:"category"`
-	Text             string          `json:"text"`
-	Title            string          `json:"title"`
-	Type             string          `json:"type"`
-	URL              string          `json:"url"`
-	Views            uint32          `json:"views"`
-	Created          string          `json:"created"`
-	Author           Author          `json:"author"`
-	Score            int             `json:"score"`
-	UpvotePercentage int             `json:"upvotePercentage"`
-	Votes            []Vote          `json:"votes"`
-	Comments         []CommentExtend `json:"comments"`
-	CommentLastID    uint32          `json:"-"`
+	Category         string          `json:"category" bson:"category"`
+	Text             string          `json:"text" bson:"text"`
+	Title            string          `json:"title" bson:"title"`
+	Type             string          `json:"type" bson:"type"`
+	URL              string          `json:"url" bson:"URL"`
+	Views            uint32          `json:"views" bson:"views"`
+	Created          string          `json:"created" bson:"created"`
+	Author           Author          `json:"author" bson:"author"`
+	Score            int             `json:"score" bson:"score"`
+	UpvotePercentage int             `json:"upvotePercentage" bson:"upvotePercentage"`
+	Votes            []Vote          `json:"votes" bson:"votes"`
+	Comments         []CommentExtend `json:"comments" bson:"comments"`
+	CommentLastID    uint32          `json:"-" bson:"-"`
 }
 
 func NewPost(category, text, title, postType, url, created string, author Author) Post {
@@ -146,8 +146,8 @@ func NewPostExtend(post Post, id string) PostExtend {
 }
 
 type Author struct {
-	Username string `json:"username"`
-	ID       string `json:"id"`
+	Username string `json:"username" bson:"username"`
+	ID       string `json:"id" bson:"id"`
 }
 
 func NewAuthor(id, username string) Author {
@@ -158,8 +158,8 @@ func NewAuthor(id, username string) Author {
 }
 
 type Vote struct {
-	UserID string `json:"user"`
-	Vote   int    `json:"vote"`
+	UserID string `json:"user" bson:"userID"`
+	Vote   int    `json:"vote" bson:"vote"`
 }
 
 func NewVote() *Vote {

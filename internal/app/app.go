@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gomodule/redigo/redis"
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,17 +17,24 @@ import (
 	"redditClone/internal/domain/usecase"
 	"redditClone/internal/repository"
 	"redditClone/internal/repository/inMemory"
+	"redditClone/internal/repository/post"
 	"redditClone/pkg/hash"
 	"syscall"
 )
 
 const (
-	inMem = 1
+	inMem = "inmemory"
+	db    = "db"
 )
 
 func Run(cfg Config) {
 	//  INIT REPOS
-	repos := NewRepositories(cfg.RepoConfig.Type)
+	ctx := context.Background()
+	repos, err := NewRepositories(ctx, cfg)
+	if err != nil {
+		logrus.Fatalf("could't init repos")
+	}
+	redisConn, err := redis.Dial(cfg.RedisConfig.Network, cfg.RedisConfig.Address)
 
 	//  INIT SERVICES
 	services := service.NewServices(repos)
@@ -45,7 +55,7 @@ func Run(cfg Config) {
 			return nil, fmt.Errorf("bad sign method")
 		}
 		return []byte(cfg.SignerConfig.SigningKey), nil
-	})
+	}, redisConn)
 
 	validator, err := handlers.NewValidator()
 	if err != nil {
@@ -79,14 +89,25 @@ func Run(cfg Config) {
 	}
 }
 
-func NewRepositories(repoType int) *repository.Repositories {
-	switch repoType {
+func NewRepositories(ctx context.Context, cfg Config) (*repository.Repositories, error) {
+	switch cfg.RepoConfig.Type {
 	case inMem:
 		return &repository.Repositories{
 			PostRepository: inMemory.NewPosts(),
 			UserRepository: inMemory.NewUsers(),
+		}, nil
+	case db:
+		sess, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost"))
+		if err != nil {
+			return nil, fmt.Errorf("%w", err)
 		}
+		collection := sess.Database("Slavreddit").Collection("posts")
+
+		return &repository.Repositories{
+			PostRepository: post.NewPosts(sess, collection),
+			UserRepository: inMemory.NewUsers(),
+		}, nil
 	default:
-		return nil
+		return nil, fmt.Errorf("wrong repo type conf")
 	}
 }

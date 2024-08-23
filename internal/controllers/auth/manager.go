@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
+	"github.com/gomodule/redigo/redis"
 	"redditClone/internal/domain/entities"
 	"time"
 
@@ -26,13 +26,15 @@ type AuthManager struct {
 	secretKey      []byte
 	keyFunc        jwt.Keyfunc
 	accessTokenTTL time.Duration
+	sessionStorage redis.Conn
 }
 
-func NewAuthManager(secret []byte, accessTokenTTL time.Duration, fun jwt.Keyfunc) *AuthManager {
+func NewAuthManager(secret []byte, accessTokenTTL time.Duration, fun jwt.Keyfunc, conn redis.Conn) *AuthManager {
 	return &AuthManager{
 		secretKey:      secret,
 		keyFunc:        fun,
 		accessTokenTTL: accessTokenTTL,
+		sessionStorage: conn,
 	}
 }
 
@@ -91,11 +93,10 @@ func (a *AuthManager) CreateSession(user entities.UserExtend) (string, error) {
 	key := session.ID
 	_, _ = key, data
 
-	// TODO: implement stateful session management
-	//_, errRedisSet := redis.String(a.sessionRepo.Do("SET", key, data, "EX", 86400))
-	//if errRedisSet != nil {
-	//	return "", fmt.Errorf("redis.String(a.sessionRepo.Do(\"SET\", key, data, \"EX\", 86400)) failed: %w", errRedisSet)
-	//}
+	_, errRedisSet := redis.String(a.sessionStorage.Do("SET", key, data, "EX", int(a.accessTokenTTL/time.Second)))
+	if errRedisSet != nil {
+		return "", fmt.Errorf("redis.String(a.sessionRepo.Do(\"SET\", key, data, \"EX\", 86400)) failed: %w", errRedisSet)
+	}
 
 	accessToken, errCreateToken := a.CreateToken(user)
 	if errCreateToken != nil {
@@ -105,35 +106,24 @@ func (a *AuthManager) CreateSession(user entities.UserExtend) (string, error) {
 }
 
 func (a *AuthManager) GetSession(session Session) error {
-	//key := session.ID
-	//data, errRedisGet := redis.Bytes(a.sessionRepo.Do("GET", key))
-	//if errRedisGet != nil {
-	//	return fmt.Errorf("redis.Bytes(a.sessionRepo.Do(\"GET\", key)) failed: %v", errRedisGet)
-	//}
-	//errSessionUnmarshal := json.Unmarshal(data, &session)
-	//if errSessionUnmarshal != nil {
-	//	return fmt.Errorf("json.Unmarshal(data, session) failed: %w", ErrSessionUnmarshal)
-	//}
+	key := session.ID
+	data, errRedisGet := redis.Bytes(a.sessionStorage.Do("GET", key))
+	if errRedisGet != nil {
+		return fmt.Errorf("redis.Bytes(a.sessionRepo.Do(\"GET\", key)) failed: %v", errRedisGet)
+	}
+	errSessionUnmarshal := json.Unmarshal(data, &session)
+	if errSessionUnmarshal != nil {
+		return fmt.Errorf("json.Unmarshal(data, session) failed: %w", ErrSessionUnmarshal)
+	}
 	return nil
 }
 
 func (a *AuthManager) DeleteSession(sid SessionID) error {
-	//key := sid.AccessToken
-	//_, errRedisDel := redis.Int(a.sessionRepo.Do("DEL", key))
-	//if errRedisDel != nil {
-	//	return fmt.Errorf("a.sessionRepo.Do(\"DEL\", key) failed: %w", errRedisDel)
-	//}
-
-	return nil
-}
-
-func (a *AuthManager) CreateCookie(token string) http.Cookie {
-	cookie := http.Cookie{
-		Name:   AuthKey,
-		Value:  token,
-		Path:   "/",
-		MaxAge: int(a.accessTokenTTL / time.Second),
+	key := sid.AccessToken
+	_, errRedisDel := redis.Int(a.sessionStorage.Do("DEL", key))
+	if errRedisDel != nil {
+		return fmt.Errorf("a.sessionRepo.Do(\"DEL\", key) failed: %w", errRedisDel)
 	}
 
-	return cookie
+	return nil
 }

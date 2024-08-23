@@ -14,10 +14,16 @@ type SignerConfig struct {
 
 type AuthConfig struct {
 	AccessTokenTTL time.Duration `yaml:"accessTokenTTL" env-default:"24h"`
+	SessionTTL     time.Duration `yaml:"sessionTTL" env-default:"43200s"`
 }
 
 type RepoConfig struct {
-	Type int `yaml:"type"`
+	Type string `yaml:"type"`
+}
+
+type RedisConfig struct {
+	Network string `yaml:"network"`
+	Address string `yaml:"address"`
 }
 
 type HTTPServerConfig struct {
@@ -31,11 +37,10 @@ type Config struct {
 	RepoConfig       `yaml:"RepoConfig"`
 	SignerConfig     `yaml:"-"`
 	HTTPServerConfig `yaml:"HTTPServerConfig"`
+	RedisConfig      `yaml:"RedisConfig"`
 }
 
 func MustLoad() *Config {
-	//configPath := flag.String("conf", "config/configs.yml", "Путь до файла конфигурации. Чтобы использовать переменную окружения - необходимо передать ее название при запуске программы: -conf=$CONFIG_PATH")
-	//flag.Parse()
 	if err := godotenv.Load(".env"); err != nil {
 		logrus.Fatalln(err)
 	}

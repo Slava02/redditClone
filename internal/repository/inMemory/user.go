@@ -16,7 +16,7 @@ type Users struct {
 	users     map[string]entities.UserExtend
 }
 
-var _ interfaces.IUserRepository = &Users{}
+var _ interfaces.IUserRepository = (*Users)(nil)
 
 func NewUsers() *Users {
 	users := map[string]entities.UserExtend{

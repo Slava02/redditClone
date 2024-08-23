@@ -5,6 +5,11 @@ HTTPServerConfig:
 
 AuthConfig:
   access_token_ttl: 24h
+  session_ttl: 43200s
 
 RepoConfig:
-  type: 1
+  type: "db"
+
+RedisConfig:
+  network: "tcp"
+  address: "localhost:6379"

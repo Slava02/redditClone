@@ -34,6 +34,13 @@ func Auth(a interfaces.IAuthManager) gin.HandlerFunc {
 				return
 			}
 
+			getSessionErr := a.GetSession(*session)
+			if getSessionErr != nil {
+				logger.Errorf(err.Error())
+
+				c.AbortWithStatus(http.StatusInternalServerError)
+			}
+
 			c.Set(auth.SessKey, session)
 		} else {
 			logger.Info("token is empty")
