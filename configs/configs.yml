@@ -13,3 +13,21 @@ RepoConfig:
 RedisConfig:
   network: "tcp"
   address: "localhost:6379"
+
+MySQLConfig:
+  username: "root"
+  host: "localhost"
+  port: "3306"
+  db_name: "Slavreddit"
+  max_open_conn: 10
+
+MongoConfig:
+  username: ""
+  host: "localhost"
+  port: "27017"
+  db_name: "Slavreddit"
+  collection_name: "posts"
+
+MigrationConfig:
+  attempts: 3
+  timeout: 5

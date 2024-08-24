@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gomodule/redigo/redis"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,6 +20,7 @@ import (
 	"redditClone/internal/repository"
 	"redditClone/internal/repository/inMemory"
 	"redditClone/internal/repository/post"
+	"redditClone/internal/repository/user"
 	"redditClone/pkg/hash"
 	"syscall"
 )
@@ -97,17 +100,68 @@ func NewRepositories(ctx context.Context, cfg Config) (*repository.Repositories,
 			UserRepository: inMemory.NewUsers(),
 		}, nil
 	case db:
-		sess, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost"))
+		client, collection, err := initMongoDB(ctx, cfg.MongoConfig)
 		if err != nil {
 			return nil, fmt.Errorf("%w", err)
 		}
-		collection := sess.Database("Slavreddit").Collection("posts")
+		logrus.Infoln("connected to mongo")
+
+		sql, err := initMySQL(ctx, cfg.MySQLConfig)
+		if err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
+		logrus.Infoln("connected to user")
 
 		return &repository.Repositories{
-			PostRepository: post.NewPosts(sess, collection),
-			UserRepository: inMemory.NewUsers(),
+			PostRepository: post.NewPosts(client, collection),
+			UserRepository: user.NewUsers(sql),
 		}, nil
 	default:
 		return nil, fmt.Errorf("wrong repo type conf")
 	}
+}
+
+func initMySQL(ctx context.Context, cfg MySQLConfig) (*sql.DB, error) {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+		cfg.Username,
+		cfg.Password,
+		cfg.Host,
+		cfg.Port,
+		cfg.DBName,
+	)
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+	if err = db.Ping(); err != nil {
+		if err := db.Close(); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+	db.SetMaxOpenConns(cfg.MaxOpenConn)
+	return db, nil
+}
+
+func initMongoDB(ctx context.Context, cfg MongoConfig) (*mongo.Client, *mongo.Collection, error) {
+	mongoURL := fmt.Sprintf("mongodb://%s:%s", cfg.Host, cfg.Port)
+
+	credential := options.Credential{
+		Username: cfg.Username,
+		Password: cfg.Password,
+	}
+	_ = credential
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURL))
+	if err != nil {
+		return nil, nil, fmt.Errorf("%w", err)
+	} else if err = client.Ping(ctx, nil); err != nil {
+		if err := client.Disconnect(ctx); err != nil {
+			logrus.Errorln(err)
+		}
+		return nil, nil, err
+	}
+	collection := client.Database(cfg.DBName).Collection(cfg.CollectionName)
+
+	return client, collection, nil
 }

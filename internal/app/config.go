@@ -8,6 +8,24 @@ import (
 	"time"
 )
 
+type MongoConfig struct {
+	Username       string `yaml:"username"`
+	Password       string `yaml:"-"`
+	Host           string `yaml:"host"`
+	Port           string `yaml:"port"`
+	DBName         string `yaml:"db_name"`
+	CollectionName string `yaml:"collection_name"`
+}
+
+type MySQLConfig struct {
+	Username    string `yaml:"username"`
+	Password    string `yaml:"-"`
+	Host        string `yaml:"host"`
+	Port        string `yaml:"port"`
+	DBName      string `yaml:"db_name"`
+	MaxOpenConn int    `yaml:"max_open_conn"`
+}
+
 type SignerConfig struct {
 	SigningKey string
 }
@@ -33,6 +51,8 @@ type HTTPServerConfig struct {
 }
 
 type Config struct {
+	MySQLConfig      `yaml:"MySQLConfig"`
+	MongoConfig      `yaml:"MongoConfig"`
 	AuthConfig       `yaml:"AuthConfig"`
 	RepoConfig       `yaml:"RepoConfig"`
 	SignerConfig     `yaml:"-"`
@@ -58,6 +78,8 @@ func MustLoad() *Config {
 	}
 
 	cfg.SignerConfig.SigningKey = os.Getenv("SIGNING_KEY")
+	cfg.MongoConfig.Password = os.Getenv("MONGODB_PASSWORD")
+	cfg.MySQLConfig.Password = os.Getenv("MYSQL_PASSWORD")
 
 	return &cfg
 }
